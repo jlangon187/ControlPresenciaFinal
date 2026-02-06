@@ -1,0 +1,39 @@
+[versions]
+agp = "9.0.0"
+converterGson = "3.0.0"
+junit = "4.13.2"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+appcompat = "1.7.1"
+lifecycleViewmodel = "2.6.2"
+loggingInterceptor = "5.3.2"
+material = "1.13.0"
+activity = "1.12.2"
+constraintlayout = "2.2.1"
+navigationFragment = "2.7.7"
+osmdroidAndroid = "6.1.20"
+playServicesLocation = "21.3.0"
+firebaseAppdistributionGradle = "5.2.0"
+
+[libraries]
+converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+lifecycle-livedata = { module = "androidx.lifecycle:lifecycle-livedata", version.ref = "lifecycleViewmodel" }
+lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycleViewmodel" }
+logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "loggingInterceptor" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+navigation-fragment = { module = "androidx.navigation:navigation-fragment", version.ref = "navigationFragment" }
+navigation-ui = { module = "androidx.navigation:navigation-ui", version.ref = "navigationFragment" }
+osmdroid-android = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroidAndroid" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converterGson" }
+firebase-appdistribution-gradle = { group = "com.google.firebase", name = "firebase-appdistribution-gradle", version.ref = "firebaseAppdistributionGradle" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+
