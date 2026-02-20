@@ -57,6 +57,8 @@ public class HomeFragment extends Fragment {
     private User usuarioActual;
     private FusedLocationProviderClient fusedLocationClient;
     private static final int REQUEST_LOCATION_PERMISSION = 100;
+    private android.nfc.NfcAdapter nfcAdapter;
+    private String uidSimulado = "A1B2C3D4";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -83,6 +85,8 @@ public class HomeFragment extends Fragment {
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
         map.getController().setZoom(18.0);
+
+        nfcAdapter = android.nfc.NfcAdapter.getDefaultAdapter(requireContext());
 
         btnEntrada.setOnClickListener(v -> {
             if (checkPermission()) {
@@ -142,6 +146,13 @@ public class HomeFragment extends Fragment {
                     Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment);
                 }
             });
+        }
+
+        // Pedir permiso de notificaciones para Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
         }
 
         viewModel.getStatusMessage().observe(getViewLifecycleOwner(), mensaje -> Toast.makeText(getContext(), mensaje, Toast.LENGTH_LONG).show());
@@ -231,13 +242,27 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (map != null) map.onResume();
+        if (nfcAdapter != null) {
+            // Encendemos el radar NFC
+            android.os.Bundle options = new android.os.Bundle();
+            options.putInt(android.nfc.NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250);
+            nfcAdapter.enableReaderMode(requireActivity(), nfcCallback,
+                    android.nfc.NfcAdapter.FLAG_READER_NFC_A |
+                            android.nfc.NfcAdapter.FLAG_READER_NFC_B |
+                            android.nfc.NfcAdapter.FLAG_READER_NFC_F |
+                            android.nfc.NfcAdapter.FLAG_READER_NFC_V |
+                            android.nfc.NfcAdapter.FLAG_READER_NFC_BARCODE,
+                    options);
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (map != null) map.onPause();
+        if (nfcAdapter != null) {
+            // Apagamos el radar NFC al salir de la app
+            nfcAdapter.disableReaderMode(requireActivity());
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -280,5 +305,33 @@ public class HomeFragment extends Fragment {
             @Override
             public void onFailure(Call<List<Empresa>> call, Throwable t) { progressBar.setVisibility(View.GONE); }
         });
+    }
+
+    // --- LÓGICA NFC REAL ---
+    private final android.nfc.NfcAdapter.ReaderCallback nfcCallback = tag -> {
+        // 1. Extraemos el número de serie (UID) del chip NFC
+        byte[] id = tag.getId();
+        String nfcUid = bytesToHex(id);
+
+        // 2. Volvemos al hilo principal de la pantalla para mostrar cosas
+        requireActivity().runOnUiThread(() -> {
+            Toast.makeText(getContext(), "¡Tarjeta NFC detectada! UID: " + nfcUid, Toast.LENGTH_SHORT).show();
+            procesarFichajeNFC(nfcUid);
+        });
+    };
+
+    // Función auxiliar para convertir los bytes del chip en texto legible
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
+    }
+
+    private void procesarFichajeNFC(String uidTarjeta) {
+        // Aquí es donde mandaremos el UID al servidor para decirle "Oye, ficha a este tío"
+        android.util.Log.d("NFC_TEST", "El servidor va a procesar la tarjeta: " + uidTarjeta);
+        Toast.makeText(getContext(), "Procesando tarjeta: " + uidTarjeta, Toast.LENGTH_SHORT).show();
     }
 }

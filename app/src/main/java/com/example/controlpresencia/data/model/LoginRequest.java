@@ -1,12 +1,17 @@
 package com.example.controlpresencia.data.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class LoginRequest {
     private String email;
     private String password;
+    @SerializedName("fcm_token")
+    private String fcmToken;
 
-    public LoginRequest(String email, String password) {
+    public LoginRequest(String email, String password, String fcmToken) {
         this.email = email;
         this.password = password;
+        this.fcmToken = fcmToken;
     }
 
     // Getters y Setters

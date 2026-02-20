@@ -111,16 +111,16 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnEntrada"
         android:layout_width="0dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="12dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="16dp"
         android:text="FICHAR ENTRADA"
-        android:textSize="18sp"
+        android:textSize="16sp"
         android:textStyle="bold"
         app:backgroundTint="#4CAF50"
         app:cornerRadius="16dp"
         app:icon="@android:drawable/ic_menu_myplaces"
         app:iconGravity="textStart"
-        app:iconSize="32dp"
+        app:iconSize="28dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnAdminPanel" />
@@ -128,40 +128,56 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSalida"
         android:layout_width="0dp"
-        android:layout_height="100dp"
+        android:layout_height="80dp"
         android:layout_marginTop="12dp"
         android:text="FICHAR SALIDA"
-        android:textSize="18sp"
+        android:textSize="16sp"
         android:textStyle="bold"
         app:backgroundTint="#F44336"
         app:cornerRadius="16dp"
         app:icon="@android:drawable/ic_lock_power_off"
         app:iconGravity="textStart"
-        app:iconSize="32dp"
+        app:iconSize="28dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btnEntrada" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSimularNfc"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="16dp"
+        android:text="Simular Lectura NFC"
+        android:textColor="#4CAF50"
+        app:cornerRadius="12dp"
+        app:icon="@android:drawable/ic_menu_share"
+        app:iconTint="#4CAF50"
+        app:strokeColor="#4CAF50"
+        app:strokeWidth="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnSalida" />
 
     <ProgressBar
         android:id="@+id/progressBarHome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:elevation="10dp"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSalida" />
+        app:layout_constraintTop_toBottomOf="@+id/btnSimularNfc" />
 
     <org.osmdroid.views.MapView
         android:id="@+id/map"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSalida" />
+        app:layout_constraintTop_toBottomOf="@+id/btnSimularNfc" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -21,8 +21,8 @@ public class LoginRepository {
         void onError(String message);
     }
 
-    public void hacerLogin(String email, String password, LoginCallback callback) {
-        LoginRequest request = new LoginRequest(email, password);
+    public void hacerLogin(String email, String password, String fcmToken, LoginCallback callback) {
+        LoginRequest request = new LoginRequest(email, password, fcmToken);
 
         apiService.login(request).enqueue(new Callback<LoginResponse>() {
             @Override

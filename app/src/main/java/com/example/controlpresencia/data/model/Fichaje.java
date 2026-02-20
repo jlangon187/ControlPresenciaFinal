@@ -10,11 +10,11 @@ import java.util.concurrent.TimeUnit;
 public class Fichaje {
     @SerializedName("id_registro")
     private int id;
-    private String fecha; // Formato YYYY-MM-DD
+    private String fecha;
     @SerializedName("hora_entrada")
-    private String horaEntrada; // Formato ISO
+    private String horaEntrada;
     @SerializedName("hora_salida")
-    private String horaSalida; // Formato ISO
+    private String horaSalida;
 
     @SerializedName("latitud")
     private Double latitud;
@@ -22,7 +22,9 @@ public class Fichaje {
     @SerializedName("longitud")
     private Double longitud;
 
-    // --- CÁLCULOS AUXILIARES ---
+    @SerializedName("horas_extra")
+    private double horasExtra;
+
 
     public String getHoraEntradaFormateada() {
         return formatearHora(horaEntrada);
@@ -34,7 +36,7 @@ public class Fichaje {
     }
 
     public String getTotalHoras() {
-        if (horaSalida == null) return "-";
+        if (horaSalida == null) return "En curso";
 
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
@@ -45,7 +47,13 @@ public class Fichaje {
             long horas = TimeUnit.MILLISECONDS.toHours(diff);
             long minutos = TimeUnit.MILLISECONDS.toMinutes(diff) % 60;
 
-            return String.format(Locale.getDefault(), "%dh %02dm", horas, minutos);
+            String totalTrabajado = String.format(Locale.getDefault(), "%dh %02dm", horas, minutos);
+
+            if (horasExtra > 0) {
+                return totalTrabajado + " | Extra: +" + horasExtra + "h";
+            }
+            return totalTrabajado;
+
         } catch (Exception e) {
             return "Error";
         }

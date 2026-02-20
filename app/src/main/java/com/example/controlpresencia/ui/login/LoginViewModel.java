@@ -9,8 +9,7 @@ import com.example.controlpresencia.data.repository.LoginRepository;
 public class LoginViewModel extends ViewModel {
 
     private LoginRepository repository;
-
-    private MutableLiveData<LoginResponse> loginResponse = new MutableLiveData<>(); // <--- CAMBIO
+    private MutableLiveData<LoginResponse> loginResponse = new MutableLiveData<>();
     private MutableLiveData<String> errorMessage = new MutableLiveData<>();
     private MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
 
@@ -22,10 +21,10 @@ public class LoginViewModel extends ViewModel {
     public LiveData<String> getErrorMessage() { return errorMessage; }
     public LiveData<Boolean> getIsLoading() { return isLoading; }
 
-    public void login(String email, String password) {
+    public void login(String email, String password, String fcmToken) {
         isLoading.setValue(true);
 
-        repository.hacerLogin(email, password, new LoginRepository.LoginCallback() {
+        repository.hacerLogin(email, password, fcmToken, new LoginRepository.LoginCallback() {
             @Override
             public void onSuccess(LoginResponse response) {
                 isLoading.setValue(false);

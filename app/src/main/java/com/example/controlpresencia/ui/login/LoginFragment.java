@@ -57,7 +57,24 @@ public class LoginFragment extends Fragment {
             String password = etPassword.getText().toString().trim();
 
             if (!email.isEmpty() && !password.isEmpty()) {
-                viewModel.login(email, password);
+                // 1. Mostrar que estamos cargando
+                progressBar.setVisibility(View.VISIBLE);
+                btnLogin.setEnabled(false);
+
+                // 2. Pedir el Token a Firebase
+                com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken()
+                        .addOnCompleteListener(task -> {
+                            String fcmToken = null;
+                            if (task.isSuccessful() && task.getResult() != null) {
+                                fcmToken = task.getResult();
+                                android.util.Log.d("LOGIN_FCM", "Token obtenido: " + fcmToken);
+                            } else {
+                                android.util.Log.e("LOGIN_FCM", "Error al obtener token Firebase", task.getException());
+                            }
+
+                            // 3. Hacer el Login con el token
+                            viewModel.login(email, password, fcmToken);
+                        });
             } else {
                 Toast.makeText(getContext(), "Rellena todos los campos", Toast.LENGTH_SHORT).show();
             }
