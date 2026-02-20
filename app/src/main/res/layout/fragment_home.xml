@@ -17,6 +17,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnLogout"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Salir"
+        android:textColor="#F44336"
+        app:icon="@android:drawable/ic_lock_power_off"
+        app:iconTint="#F44336"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/tvStatus"
         android:layout_width="wrap_content"
@@ -44,6 +56,59 @@
         app:layout_constraintTop_toBottomOf="@+id/tvStatus" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnReportarIncidencia"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="12dp"
+        android:text="REPORTAR INCIDENCIA"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:backgroundTint="#673AB7"
+        app:cornerRadius="12dp"
+        app:icon="@android:drawable/ic_menu_agenda"
+        app:iconGravity="textStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnVerHistorial" />
+
+    <View
+        android:id="@+id/dividerAdmin"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#D3D3D3"
+        android:layout_marginTop="24dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/btnReportarIncidencia" />
+
+    <TextView
+        android:id="@+id/tvAdminTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="ZONA ADMINISTRADOR"
+        android:textColor="#FF9800"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dividerAdmin" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAdminPanel"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="12dp"
+        android:text="PANEL DE GESTIÓN"
+        android:visibility="gone"
+        app:backgroundTint="#FF9800"
+        app:cornerRadius="12dp"
+        app:icon="@android:drawable/ic_dialog_map"
+        app:iconGravity="textStart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvAdminTitle" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnEntrada"
         android:layout_width="0dp"
         android:layout_height="100dp"
@@ -58,7 +123,7 @@
         app:iconSize="32dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnVerHistorial" />
+        app:layout_constraintTop_toBottomOf="@+id/btnAdminPanel" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSalida"

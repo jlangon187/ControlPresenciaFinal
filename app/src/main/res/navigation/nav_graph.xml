@@ -9,22 +9,70 @@
         android:id="@+id/loginFragment"
         android:name="com.example.controlpresencia.ui.login.LoginFragment"
         android:label="fragment_login"
-        tools:layout="@layout/fragment_login" >
+        tools:layout="@layout/fragment_login">
         <action
             android:id="@+id/action_loginFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_forgotPasswordFragment"
+            app:destination="@id/forgotPasswordFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/forgotPasswordFragment"
+        android:name="com.example.controlpresencia.ui.login.ForgotPasswordFragment"
+        android:label="Recuperar Contraseña"
+        tools:layout="@layout/fragment_forgot_password" />
+
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.controlpresencia.ui.home.HomeFragment"
         android:label="fragment_home"
-        tools:layout="@layout/fragment_home" >
+        tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/action_homeFragment_to_fichajesFragment"
             app:destination="@id/fichajesFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_incidenciaFragment"
+            app:destination="@id/incidenciaFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_adminEmpleadosFragment"
+            app:destination="@id/adminEmpleadosFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/fichajesFragment"
         android:name="com.example.controlpresencia.ui.fichajes.FichajesFragment"
-        android:label="FichajesFragment" />
+        android:label="Mis Fichajes" />
+
+    <fragment
+        android:id="@+id/incidenciaFragment"
+        android:name="com.example.controlpresencia.ui.incidencias.IncidenciaFragment"
+        android:label="Nueva Incidencia"
+        tools:layout="@layout/fragment_incidencia" />
+
+    <fragment
+        android:id="@+id/adminEmpleadosFragment"
+        android:name="com.example.controlpresencia.ui.admin.AdminEmpleadosFragment"
+        android:label="Lista Empleados">
+        <action
+            android:id="@+id/action_adminEmpleados_to_adminHistorial"
+            app:destination="@id/adminHistorialFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/adminHistorialFragment"
+        android:name="com.example.controlpresencia.ui.admin.AdminHistorialFragment"
+        android:label="Historial Empleado">
+        <action
+            android:id="@+id/action_adminHistorial_to_mapDetail"
+            app:destination="@id/mapDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mapDetailFragment"
+        android:name="com.example.controlpresencia.ui.admin.MapDetailFragment"
+        android:label="Ubicación Fichaje"
+        tools:layout="@layout/fragment_map_detail" />
+
 </navigation>

@@ -16,6 +16,12 @@ public class Fichaje {
     @SerializedName("hora_salida")
     private String horaSalida; // Formato ISO
 
+    @SerializedName("latitud")
+    private Double latitud;
+
+    @SerializedName("longitud")
+    private Double longitud;
+
     // --- CÁLCULOS AUXILIARES ---
 
     public String getHoraEntradaFormateada() {
@@ -70,6 +76,7 @@ public class Fichaje {
         }
     }
 
-    // Getter simple para la fecha
     public String getFecha() { return fecha; }
+    public Double getLatitud() { return latitud; }
+    public Double getLongitud() { return longitud; }
 }

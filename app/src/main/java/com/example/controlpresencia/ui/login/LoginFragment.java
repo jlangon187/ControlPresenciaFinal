@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -25,6 +26,8 @@ public class LoginFragment extends Fragment {
     private EditText etEmail, etPassword;
     private Button btnLogin;
     private ProgressBar progressBar;
+    private TextView tvForgotPassword;
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -42,6 +45,8 @@ public class LoginFragment extends Fragment {
         etPassword = view.findViewById(R.id.etPassword);
         btnLogin = view.findViewById(R.id.btnLogin);
         progressBar = view.findViewById(R.id.progressBar);
+        tvForgotPassword = view.findViewById(R.id.tvForgotPassword);
+
 
         // 2. Inicializar ViewModel
         viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
@@ -58,30 +63,29 @@ public class LoginFragment extends Fragment {
             }
         });
 
-        // 4. Observar cambios (MVVM)
+        tvForgotPassword.setOnClickListener(v -> {
+            NavController navController = Navigation.findNavController(view);
+            navController.navigate(R.id.action_loginFragment_to_forgotPasswordFragment);
+        });
 
-        // Si hay error...
+// 4. Observar cambios (MVVM)
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), message -> {
             Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
         });
 
-        // Si está cargando...
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-            btnLogin.setEnabled(!isLoading); // Desactivar botón mientras carga
+            btnLogin.setEnabled(!isLoading);
         });
 
-        viewModel.getLoginToken().observe(getViewLifecycleOwner(), token -> {
-            if (token != null) {
-                // 1. Guardar el token en preferencias
+        viewModel.getLoginResponse().observe(getViewLifecycleOwner(), response -> {
+            if (response != null) {
                 SessionManager session = new SessionManager(requireContext());
-                session.saveToken(token);
+                session.saveSession(response.getAccessToken(), response.getRol(), response.getNombre());
 
-                Toast.makeText(getContext(), "Login Correcto", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "¡Bienvenido " + response.getNombre() + "!", Toast.LENGTH_SHORT).show();
 
-                // 2. Navegar al Home
                 NavController navController = Navigation.findNavController(view);
-                // IMPORTANTE: Usamos popUpTo para borrar el login del historial (botón atrás no vuelve al login)
                 navController.navigate(R.id.action_loginFragment_to_homeFragment);
             }
         });

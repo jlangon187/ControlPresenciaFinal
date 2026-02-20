@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 public class SessionManager {
     private static final String PREF_NAME = "AppSession";
     private static final String KEY_TOKEN = "auth_token";
+    private static final String KEY_ROL = "user_rol";
+    private static final String KEY_NOMBRE = "user_nombre";
 
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
@@ -17,13 +19,38 @@ public class SessionManager {
         editor = prefs.edit();
     }
 
+    public void saveSession(String token, String rol, String nombre) {
+        editor.putString(KEY_TOKEN, "Bearer " + token);
+        editor.putString(KEY_ROL, rol);
+        editor.putString(KEY_NOMBRE, nombre);
+        editor.apply();
+    }
+
+    // Método antiguo (por compatibilidad)
     public void saveToken(String token) {
-        editor.putString(KEY_TOKEN, "Bearer " + token); // Guardamos ya con el prefijo Bearer
+        editor.putString(KEY_TOKEN, "Bearer " + token);
         editor.apply();
     }
 
     public String getToken() {
         return prefs.getString(KEY_TOKEN, null);
+    }
+
+    public String getRol() {
+        return prefs.getString(KEY_ROL, "Trabajador");
+    }
+
+    public String getNombre() {
+        return prefs.getString(KEY_NOMBRE, "");
+    }
+
+    public boolean isAdmin() {
+        String rol = getRol();
+        return rol != null && (
+                rol.equalsIgnoreCase("Administrador") ||
+                        rol.equalsIgnoreCase("Admin") ||
+                        rol.equalsIgnoreCase("Superadministrador")
+        );
     }
 
     public void clearSession() {

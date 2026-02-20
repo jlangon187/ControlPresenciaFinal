@@ -2,10 +2,10 @@ package com.example.controlpresencia.ui.home;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
@@ -13,11 +13,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -30,19 +30,17 @@ import com.example.controlpresencia.data.model.User;
 import com.example.controlpresencia.data.network.RetrofitClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.button.MaterialButton;
 
-// IMPORTS DE OSMDROID
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polygon;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -54,23 +52,16 @@ public class HomeFragment extends Fragment {
     private HomeViewModel viewModel;
     private SessionManager sessionManager;
     private ProgressBar progressBar;
-    private Button btnEntrada, btnSalida;
-
-    // Variables del Mapa OSM
+    private Button btnEntrada, btnSalida, btnReportarIncidencia;
     private MapView map;
     private User usuarioActual;
-
-    // Cliente GPS
     private FusedLocationProviderClient fusedLocationClient;
     private static final int REQUEST_LOCATION_PERMISSION = 100;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // IMPORTANTE: Configurar OSM antes de inflar la vista
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Context ctx = requireContext().getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
@@ -78,23 +69,21 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. Inicializar componentes
         sessionManager = new SessionManager(requireContext());
         viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-        Button btnHistorial = view.findViewById(R.id.btnVerHistorial);
 
+        Button btnHistorial = view.findViewById(R.id.btnVerHistorial);
         progressBar = view.findViewById(R.id.progressBarHome);
         btnEntrada = view.findViewById(R.id.btnEntrada);
         btnSalida = view.findViewById(R.id.btnSalida);
-
-        // 2. CONFIGURAR EL MAPA OSM
+        btnReportarIncidencia = view.findViewById(R.id.btnReportarIncidencia);
         map = view.findViewById(R.id.map);
-        map.setTileSource(TileSourceFactory.MAPNIK); // Estilo de mapa estándar
-        map.setMultiTouchControls(true); // Permitir zoom con dos dedos
-        map.getController().setZoom(18.0); // Zoom inicial cercano
 
-        // 3. Configurar Botones
+        map.setTileSource(TileSourceFactory.MAPNIK);
+        map.setMultiTouchControls(true);
+        map.getController().setZoom(18.0);
+
         btnEntrada.setOnClickListener(v -> {
             if (checkPermission()) {
                 obtenerUbicacionYFichar();
@@ -103,20 +92,59 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        btnHistorial.setOnClickListener(v -> {
-            // Navegar al fragmento de Fichajes
-            // Asegúrate de que existe esta acción en tu nav_graph.xml
-            Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_fichajesFragment);
+        MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
+        btnLogout.setOnClickListener(v -> {
+            sessionManager.clearSession();
+
+            androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
+                    .setPopUpTo(R.id.homeFragment, true)
+                    .build();
+
+            Navigation.findNavController(v).navigate(R.id.loginFragment, null, navOptions);
         });
+
+        btnHistorial.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_fichajesFragment));
 
         btnSalida.setOnClickListener(v -> {
             String token = sessionManager.getToken();
             if (token != null) viewModel.ficharSalida(token);
         });
 
-        // 4. Observadores
-        viewModel.getStatusMessage().observe(getViewLifecycleOwner(), mensaje ->
-                Toast.makeText(getContext(), mensaje, Toast.LENGTH_LONG).show());
+        btnReportarIncidencia.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_incidenciaFragment));
+
+        TextView tvWelcome = view.findViewById(R.id.tvWelcome);
+        String nombre = sessionManager.getNombre();
+        if (nombre != null && !nombre.isEmpty()) {
+            tvWelcome.setText("Hola, " + nombre);
+        }
+
+        View dividerAdmin = view.findViewById(R.id.dividerAdmin);
+        TextView tvAdminTitle = view.findViewById(R.id.tvAdminTitle);
+        MaterialButton btnAdmin = view.findViewById(R.id.btnAdminPanel);
+
+        if (sessionManager.isAdmin()) {
+            dividerAdmin.setVisibility(View.VISIBLE);
+            tvAdminTitle.setVisibility(View.VISIBLE);
+            btnAdmin.setVisibility(View.VISIBLE);
+
+            if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
+                tvAdminTitle.setText("ZONA SUPERADMINISTRADOR");
+                btnAdmin.setText("SELECCIONAR EMPRESA");
+                map.setVisibility(View.GONE);
+            } else {
+                tvAdminTitle.setText("ZONA ADMINISTRADOR (Cargando...)");
+            }
+
+            btnAdmin.setOnClickListener(v -> {
+                if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
+                    mostrarDialogoEmpresas();
+                } else {
+                    Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment);
+                }
+            });
+        }
+
+        viewModel.getStatusMessage().observe(getViewLifecycleOwner(), mensaje -> Toast.makeText(getContext(), mensaje, Toast.LENGTH_LONG).show());
 
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
@@ -124,11 +152,8 @@ public class HomeFragment extends Fragment {
             btnSalida.setEnabled(!isLoading);
         });
 
-        // 5. Cargar datos del mapa (Empresa y Mi Ubicación)
         cargarPerfilEmpresa();
     }
-
-    // --- LÓGICA DEL MAPA ---
 
     private void cargarPerfilEmpresa() {
         String token = sessionManager.getToken();
@@ -150,48 +175,42 @@ public class HomeFragment extends Fragment {
 
         Empresa empresa = usuarioActual.getEmpresa();
         if (empresa.getLatitud() != null && empresa.getLongitud() != null) {
-
             GeoPoint puntoEmpresa = new GeoPoint(empresa.getLatitud(), empresa.getLongitud());
             int radioMetros = empresa.getRadio() != null ? empresa.getRadio() : 100;
 
-            // A. Centrar mapa en la empresa
             map.getController().setCenter(puntoEmpresa);
 
-            // B. Añadir Marcador de la Empresa
             Marker markerEmpresa = new Marker(map);
             markerEmpresa.setPosition(puntoEmpresa);
             markerEmpresa.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
             markerEmpresa.setTitle(empresa.getNombre());
-            // Puedes poner un icono personalizado si quieres: markerEmpresa.setIcon(...)
             map.getOverlays().add(markerEmpresa);
 
-            // C. Dibujar Círculo (Radio permitido)
             Polygon circulo = new Polygon();
-            // Truco: OSM no tiene "Circle", usamos un polígono de muchos puntos
             List<GeoPoint> puntosCirculo = Polygon.pointsAsCircle(puntoEmpresa, radioMetros);
             circulo.setPoints(puntosCirculo);
-            circulo.setFillColor(Color.argb(50, 0, 0, 255)); // Azul transparente
+            circulo.setFillColor(Color.argb(50, 0, 0, 255));
             circulo.setStrokeColor(Color.BLUE);
             circulo.setStrokeWidth(2.0f);
-            circulo.setTitle("Zona de Fichaje");
             map.getOverlays().add(circulo);
 
-            // D. Mostrar "Mi Ubicación" (Puntito azul)
             if (checkPermission()) {
                 MyLocationNewOverlay myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(requireContext()), map);
                 myLocationOverlay.enableMyLocation();
                 map.getOverlays().add(myLocationOverlay);
             }
 
-            map.invalidate(); // Refrescar mapa
+            if (sessionManager.isAdmin() && !sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
+                TextView tvAdminTitle = getView().findViewById(R.id.tvAdminTitle);
+                tvAdminTitle.setText("ZONA ADMIN - " + empresa.getNombre().toUpperCase());
+            }
+
+            map.invalidate();
         }
     }
 
-    // --- MÉTODOS DE PERMISOS Y FICHAJE (Igual que antes) ---
-
     private boolean checkPermission() {
-        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED;
+        return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void pedirPermisoGPS() {
@@ -204,7 +223,7 @@ public class HomeFragment extends Fragment {
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 obtenerUbicacionYFichar();
-                actualizarMapa(); // Para activar el puntito azul si ya cargó el perfil
+                actualizarMapa();
             }
         }
     }
@@ -234,6 +253,32 @@ public class HomeFragment extends Fragment {
             } else {
                 Toast.makeText(getContext(), "Activa el GPS", Toast.LENGTH_SHORT).show();
             }
+        });
+    }
+
+    private void mostrarDialogoEmpresas() {
+        progressBar.setVisibility(View.VISIBLE);
+        String token = sessionManager.getToken();
+        RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
+            @Override
+            public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Empresa> lista = response.body();
+                    String[] nombres = new String[lista.size()];
+                    for (int i = 0; i < lista.size(); i++) nombres[i] = lista.get(i).getNombre();
+
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Selecciona Empresa a Gestionar")
+                            .setItems(nombres, (dialog, which) -> {
+                                Bundle bundle = new Bundle();
+                                bundle.putInt("empresa_id", lista.get(which).getIdEmpresa());
+                                Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment, bundle);
+                            }).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Empresa>> call, Throwable t) { progressBar.setVisibility(View.GONE); }
         });
     }
 }
