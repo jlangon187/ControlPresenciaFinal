@@ -2,6 +2,7 @@ package com.example.controlpresencia.data.network;
 
 import com.example.controlpresencia.data.model.Empresa;
 import com.example.controlpresencia.data.model.Fichaje;
+import com.example.controlpresencia.data.model.FichajeResponse;
 import com.example.controlpresencia.data.model.IncidenciaRequest;
 import com.example.controlpresencia.data.model.LoginResponse;
 import com.example.controlpresencia.data.model.FichajeRequest;
