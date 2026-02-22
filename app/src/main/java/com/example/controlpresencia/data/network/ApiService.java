@@ -56,4 +56,10 @@ public interface ApiService {
 
     @GET("api/admin/empleados")
     Call<List<User>> getEmpleadosAdmin(@Header("Authorization") String token, @Query("empresa_id") Integer empresaId);
+
+    @POST("api/fichaje-nfc")
+    Call<FichajeResponse> ficharNFC(
+            @Header("Authorization") String token,
+            @Body FichajeRequest request
+    );
 }

@@ -4,7 +4,14 @@ import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.os.Bundle;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.controlpresencia.data.local.SessionManager;
+import com.example.controlpresencia.data.model.FichajeRequest;
+import com.example.controlpresencia.data.network.ApiService;
+import com.example.controlpresencia.data.network.RetrofitClient;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -46,18 +53,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void enviarFichajeAlServidor(String nfcUid) {
-        android.content.SharedPreferences prefs = getSharedPreferences("MisPreferencias", android.content.Context.MODE_PRIVATE);
-        String token = prefs.getString("token", null);
+        // 1. Recuperamos la sesión
+        SessionManager sessionManager = new SessionManager(this);
+        String token = sessionManager.getToken(); // Ya devuelve "Bearer " + token
 
         if (token == null) {
-            android.widget.Toast.makeText(this, "Sesión no iniciada. Abre la app primero.", android.widget.Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Inicia sesión para poder fichar", Toast.LENGTH_LONG).show();
             return;
         }
 
-        android.util.Log.d("NFC_DEBUG", "Enviando fichaje con Token: " + token + " y UID: " + nfcUid);
+        // 2. Preparamos la llamada con Retrofit
+        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
+        FichajeRequest request = new FichajeRequest(nfcUid);
 
-        // apiService.ficharNFC("Bearer " + token, new FichajeRequest(nfcUid)).enqueue(...)
+        apiService.ficharNFC(token, request).enqueue(new Callback<FichajeResponse>() {
+            @Override
+            public void onResponse(Call<FichajeResponse> call, Response<FichajeResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Éxito: El servidor nos devuelve el mensaje de "Hola Juan, entrada registrada"
+                    Toast.makeText(MainActivity.this, response.body().getMessage(), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Error: Tarjeta no autorizada", Toast.LENGTH_SHORT).show();
+                }
+            }
 
-        android.widget.Toast.makeText(this, "Procesando fichaje NFC...", android.widget.Toast.LENGTH_SHORT).show();
+            @Override
+            public void onFailure(Call<FichajeResponse> call, Throwable t) {
+                // Error de conexión (por ejemplo, si no tienes internet)
+                Toast.makeText(MainActivity.this, "Error de conexión con el servidor", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
