@@ -3,6 +3,7 @@ package com.example.controlpresencia.data.repository;
 import com.example.controlpresencia.data.model.FichajeRequest;
 import com.example.controlpresencia.data.network.ApiService;
 import com.example.controlpresencia.data.network.RetrofitClient;
+import org.json.JSONObject;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -20,6 +21,21 @@ public class HomeRepository {
         void onError(String error);
     }
 
+    private String extraerMensajeError(Response<?> response, String mensajePorDefecto) {
+        try {
+            if (response.errorBody() != null) {
+                String errorStr = response.errorBody().string();
+                JSONObject jsonObject = new JSONObject(errorStr);
+                if (jsonObject.has("message")) {
+                    return jsonObject.getString("message");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return mensajePorDefecto;
+    }
+
     // Fichar Entrada
     public void registrarEntrada(String token, double lat, double lon, FichajeCallback callback) {
         FichajeRequest request = new FichajeRequest(lat, lon);
@@ -29,17 +45,16 @@ public class HomeRepository {
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     callback.onSuccess("✅ Entrada registrada correctamente");
-                } else if (response.code() == 403) {
-                    callback.onError("⛔ Estás demasiado lejos de la empresa.");
-                } else if (response.code() == 409) {
-                    callback.onError("⚠️ Ya tienes un turno abierto.");
+                } else if (response.code() == 403 || response.code() == 409) {
+                    String motivoReal = extraerMensajeError(response, "Error al fichar.");
+                    callback.onError("⚠️ " + motivoReal);
                 } else {
-                    callback.onError("Error: " + response.code());
+                    callback.onError("Error del servidor: " + response.code());
                 }
             }
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                callback.onError("Error de conexión");
+                callback.onError("Error de conexión. Revisa tu internet.");
             }
         });
     }
@@ -52,8 +67,8 @@ public class HomeRepository {
                 if (response.isSuccessful()) {
                     callback.onSuccess("👋 Salida registrada. ¡Hasta mañana!");
                 } else if (response.code() == 409) {
-                    // AQUÍ ESTÁ EL CAMBIO: Personalizamos el mensaje
-                    callback.onError("⚠️ No tienes ningún turno abierto para cerrar.");
+                    String motivoReal = extraerMensajeError(response, "No tienes turno abierto.");
+                    callback.onError("⚠️ " + motivoReal);
                 } else if (response.code() == 401) {
                     callback.onError("🔒 Sesión caducada. Vuelve a hacer login.");
                 } else {
