@@ -2,4 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-</resources>
+
+    <color name="app_bg">#F4F7FB</color>
+    <color name="header_bg">#0F172A</color>
+    <color name="text_primary">#1E293B</color>
+    <color name="text_secondary">#64748B</color>
+    <color name="text_header_sub">#94A3B8</color>
+    <color name="btn_entrada_bg">#D1FAE5</color>
+    <color name="btn_entrada_fg">#065F46</color>
+    <color name="btn_salida_bg">#FEE2E2</color>
+    <color name="btn_salida_fg">#991B1B</color>
+    <color name="btn_tool_bg">#FFFFFF</color>
+    <color name="btn_tool_icon">#3B82F6</color>   </resources>

@@ -44,8 +44,6 @@ public class IncidenciaFragment extends Fragment {
         etTitulo = view.findViewById(R.id.etTituloIncidencia);
         etDescripcion = view.findViewById(R.id.etDescripcionIncidencia);
         btnEnviar = view.findViewById(R.id.btnEnviarIncidencia);
-        progressBar = view.findViewById(R.id.pbIncidencia);
-
         btnEnviar.setOnClickListener(v -> enviarIncidencia());
     }
 

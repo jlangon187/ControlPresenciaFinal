@@ -17,10 +17,13 @@ import java.util.Locale;
 public class FichajesViewModel extends ViewModel {
     private List<Fichaje> listaCompleta = new ArrayList<>();
     private MutableLiveData<List<Fichaje>> listaFichajes = new MutableLiveData<>();
-    private MutableLiveData<String> resumenSemanal = new MutableLiveData<>();
+    private MutableLiveData<String> resumenTrabajado = new MutableLiveData<>();
+    private MutableLiveData<String> resumenExtra = new MutableLiveData<>();
     private MutableLiveData<String> errorMsg = new MutableLiveData<>();
+
     public MutableLiveData<List<Fichaje>> getListaFichajes() { return listaFichajes; }
-    public MutableLiveData<String> getResumenSemanal() { return resumenSemanal; }
+    public MutableLiveData<String> getResumenTrabajado() { return resumenTrabajado; }
+    public MutableLiveData<String> getResumenExtra() { return resumenExtra; }
 
     public void cargarHistorial(String token) {
         RetrofitClient.getInstance().getMyApi().getHistorial(token).enqueue(new Callback<List<Fichaje>>() {
@@ -28,9 +31,8 @@ public class FichajesViewModel extends ViewModel {
             public void onResponse(Call<List<Fichaje>> call, Response<List<Fichaje>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     listaCompleta = response.body();
-
                     listaFichajes.setValue(listaCompleta);
-                    calcularTotalSemanal(listaCompleta);
+                    calcularTotales(listaCompleta);
                 } else {
                     errorMsg.setValue("Error al cargar datos");
                 }
@@ -42,27 +44,34 @@ public class FichajesViewModel extends ViewModel {
         });
     }
 
-    private void calcularTotalSemanal(List<Fichaje> datos) {
+    private void calcularTotales(List<Fichaje> datos) {
         long totalMinutos = 0;
-        // Aquí sumamos TODO el historial.
-        // Para hacerlo "Semanal" real habría que filtrar por fecha con Calendar,
-        // pero para empezar sumaremos todo lo que devuelve la API (que suele ser el mes o recientes).
+        double totalExtrasDec = 0.0;
+
         for (Fichaje f : datos) {
             totalMinutos += f.getMinutosTrabajados();
+            totalExtrasDec += f.getHorasExtra();
         }
 
         long horas = TimeUnit.MINUTES.toHours(totalMinutos);
         long minutos = totalMinutos % 60;
+        resumenTrabajado.setValue(horas + "h " + minutos + "m");
 
-        resumenSemanal.setValue(horas + "h " + minutos + "m");
+        long extraMinutosTotales = Math.round(totalExtrasDec * 60);
+        long hExtra = extraMinutosTotales / 60;
+        long mExtra = extraMinutosTotales % 60;
+
+        if (extraMinutosTotales > 0) {
+            resumenExtra.setValue("+" + hExtra + "h " + String.format(Locale.getDefault(), "%02d", mExtra) + "m");
+        } else {
+            resumenExtra.setValue("0h 00m");
+        }
     }
 
-    // --- NUEVO MÉTODO: FILTRAR ---
     public void filtrarPorRango(Long fechaInicio, Long fechaFin) {
         if (fechaInicio == null || fechaFin == null) {
-            // Si no hay fechas, restauramos la lista completa
             listaFichajes.setValue(listaCompleta);
-            calcularTotalSemanal(listaCompleta);
+            calcularTotales(listaCompleta);
             return;
         }
 
@@ -71,19 +80,15 @@ public class FichajesViewModel extends ViewModel {
 
         for (Fichaje f : listaCompleta) {
             try {
-                // Convertir la fecha del fichaje (String) a Timestamp
                 Date dateFichaje = sdf.parse(f.getFecha());
                 long timeFichaje = dateFichaje.getTime();
-
-                // Comprobar si está dentro del rango
                 if (timeFichaje >= fechaInicio && timeFichaje <= fechaFin) {
                     listaFiltrada.add(f);
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception ignored) {}
         }
 
-        // Actualizamos la pantalla con la lista filtrada
         listaFichajes.setValue(listaFiltrada);
-        calcularTotalSemanal(listaFiltrada); // Recalcula las horas solo de esos días
+        calcularTotales(listaFiltrada);
     }
 }

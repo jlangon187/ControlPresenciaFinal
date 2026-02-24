@@ -1,183 +1,357 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
+    android:background="@color/app_bg"
+    android:fillViewport="true"
     tools:context=".ui.home.HomeFragment">
 
-    <TextView
-        android:id="@+id/tvWelcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Control de Presencia"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnLogout"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Salir"
-        android:textColor="#F44336"
-        app:icon="@android:drawable/ic_lock_power_off"
-        app:iconTint="#F44336"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Panel de Control"
-        android:textColor="#757575"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvWelcome" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnVerHistorial"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="12dp"
-        android:text="VER MI HISTORIAL"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        app:backgroundTint="#2196F3"
-        app:cornerRadius="12dp"
-        app:icon="@android:drawable/ic_menu_agenda"
-        app:iconGravity="textStart"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvStatus" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnReportarIncidencia"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="12dp"
-        android:text="REPORTAR INCIDENCIA"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        app:backgroundTint="#673AB7"
-        app:cornerRadius="12dp"
-        app:icon="@android:drawable/ic_menu_agenda"
-        app:iconGravity="textStart"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnVerHistorial" />
-
-    <View
-        android:id="@+id/dividerAdmin"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:background="#D3D3D3"
-        android:layout_marginTop="24dp"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@+id/btnReportarIncidencia" />
+        android:layout_height="match_parent"
+        android:paddingBottom="24dp">
 
-    <TextView
-        android:id="@+id/tvAdminTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="ZONA ADMINISTRADOR"
-        android:textColor="#FF9800"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dividerAdmin" />
+        <View
+            android:id="@+id/headerBackground"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:background="@color/header_bg"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnAdminPanel"
-        android:layout_width="0dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="12dp"
-        android:text="PANEL DE GESTIÓN"
-        android:visibility="gone"
-        app:backgroundTint="#FF9800"
-        app:cornerRadius="12dp"
-        app:icon="@android:drawable/ic_dialog_map"
-        app:iconGravity="textStart"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvAdminTitle" />
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Hola,"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/btnLogout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnEntrada"
-        android:layout_width="0dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="16dp"
-        android:text="FICHAR ENTRADA"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:backgroundTint="#4CAF50"
-        app:cornerRadius="16dp"
-        app:icon="@android:drawable/ic_menu_myplaces"
-        app:iconGravity="textStart"
-        app:iconSize="28dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnAdminPanel" />
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="8dp"
+            android:text="Panel del Trabajador"
+            android:textColor="@color/text_header_sub"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvWelcome" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSalida"
-        android:layout_width="0dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="12dp"
-        android:text="FICHAR SALIDA"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:backgroundTint="#F44336"
-        app:cornerRadius="16dp"
-        app:icon="@android:drawable/ic_lock_power_off"
-        app:iconGravity="textStart"
-        app:iconSize="28dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnEntrada" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAdminPanel"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="8dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="MODO ADMIN"
+            android:textColor="@color/white"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:backgroundTint="#EA580C"
+            app:cornerRadius="16dp"
+            app:icon="@android:drawable/ic_dialog_dialer"
+            app:iconSize="14dp"
+            app:iconTint="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvStatus" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSimularNfc"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="0dp"
-        android:layout_height="55dp"
-        android:layout_marginTop="16dp"
-        android:text="Simular Lectura NFC"
-        android:textColor="#4CAF50"
-        app:cornerRadius="12dp"
-        app:icon="@android:drawable/ic_menu_share"
-        app:iconTint="#4CAF50"
-        app:strokeColor="#4CAF50"
-        app:strokeWidth="2dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSalida" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogout"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="16dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="8dp"
+            android:text="Salir"
+            android:textColor="#FCA5A5"
+            app:icon="@android:drawable/ic_lock_power_off"
+            app:iconTint="#FCA5A5"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <ProgressBar
-        android:id="@+id/progressBarHome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:elevation="10dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSimularNfc" />
 
-    <org.osmdroid.views.MapView
-        android:id="@+id/map"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSimularNfc" />
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAdminDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="135dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="8dp"
+            app:layout_constraintTop_toTopOf="parent">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <ImageView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@android:drawable/ic_dialog_map"
+                    app:tint="#EA580C" />
+
+                <TextView
+                    android:id="@+id/tvAdminDashboardTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Centro de Control"
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:background="@drawable/ic_launcher_background"
+                        android:backgroundTint="#10B981"
+                        android:layout_marginEnd="6dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Conectado con Base de Datos"
+                        android:textColor="#10B981"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E2E8F0"
+                    android:layout_marginVertical="24dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAdminAccion1"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:text="GESTIONAR FICHAJES"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#EA580C"
+                    app:cornerRadius="12dp"
+                    app:icon="@android:drawable/ic_menu_manage"
+                    app:iconGravity="textStart" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAdminAccion2"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="55dp"
+                    android:layout_marginTop="8dp"
+                    android:text="VER INCIDENCIAS"
+                    android:textColor="#EA580C"
+                    android:textSize="13sp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="#EA580C"
+                    app:strokeWidth="2dp"
+                    app:icon="@android:drawable/ic_menu_info_details"
+                    app:iconTint="#EA580C"
+                    app:iconGravity="textStart" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/groupTrabajador"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:constraint_referenced_ids="cardFichaje,tvToolsTitle,gridHerramientas,cardMap" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardFichaje"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="135dp"
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="8dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Registro de Jornada"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEntrada"
+                        android:layout_width="0dp"
+                        android:layout_height="90dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:text="ENTRADA"
+                        android:textColor="@color/btn_entrada_fg"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/btn_entrada_bg"
+                        app:cornerRadius="14dp"
+                        app:icon="@android:drawable/ic_input_add"
+                        app:iconGravity="textTop"
+                        app:iconSize="28dp"
+                        app:iconTint="@color/btn_entrada_fg" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSalida"
+                        android:layout_width="0dp"
+                        android:layout_height="90dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:text="SALIDA"
+                        android:textColor="@color/btn_salida_fg"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/btn_salida_bg"
+                        app:cornerRadius="14dp"
+                        app:icon="@android:drawable/ic_delete"
+                        app:iconGravity="textTop"
+                        app:iconSize="28dp"
+                        app:iconTint="@color/btn_salida_fg" />
+                </LinearLayout>
+
+                <ProgressBar
+                    android:id="@+id/progressBarHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSimularNfc"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Fichar con NFC 💳"
+                    android:textColor="#6366F1"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvToolsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="20dp"
+            android:text="Herramientas"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cardFichaje" />
+
+        <LinearLayout
+            android:id="@+id/gridHerramientas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="12dp"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@+id/tvToolsTitle">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnVerHistorial"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:elevation="2dp"
+                android:text="Historial"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                app:backgroundTint="@color/btn_tool_bg"
+                app:cornerRadius="14dp"
+                app:icon="@android:drawable/ic_menu_agenda"
+                app:iconGravity="textStart"
+                app:iconSize="20dp"
+                app:iconTint="@color/btn_tool_icon" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReportarIncidencia"
+                android:layout_width="0dp"
+                android:layout_height="75dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:elevation="2dp"
+                android:text="Incidencias"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                app:backgroundTint="@color/btn_tool_bg"
+                app:cornerRadius="14dp"
+                app:icon="@android:drawable/ic_menu_info_details"
+                app:iconGravity="textStart"
+                app:iconSize="20dp"
+                app:iconTint="#F59E0B" />
+        </LinearLayout>
+
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardMap"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="2dp"
+            app:layout_constraintHeight_min="180dp"
+            app:layout_constraintTop_toBottomOf="@+id/gridHerramientas"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <org.osmdroid.views.MapView
+                android:id="@+id/map"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

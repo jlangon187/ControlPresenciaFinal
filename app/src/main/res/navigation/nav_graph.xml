@@ -38,6 +38,9 @@
         <action
             android:id="@+id/action_homeFragment_to_adminEmpleadosFragment"
             app:destination="@id/adminEmpleadosFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_adminIncidenciasFragment"
+            app:destination="@id/adminIncidenciasFragment" />
     </fragment>
 
     <fragment
@@ -74,5 +77,10 @@
         android:name="com.example.controlpresencia.ui.admin.MapDetailFragment"
         android:label="Ubicación Fichaje"
         tools:layout="@layout/fragment_map_detail" />
+    <fragment
+        android:id="@+id/adminIncidenciasFragment"
+        android:name="com.example.controlpresencia.ui.admin.AdminIncidenciasFragment"
+        android:label="fragment_admin_incidencias"
+        tools:layout="@layout/fragment_admin_incidencias" />
 
 </navigation>

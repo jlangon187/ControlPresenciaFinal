@@ -3,6 +3,7 @@ package com.example.controlpresencia.data.network;
 import com.example.controlpresencia.data.model.Empresa;
 import com.example.controlpresencia.data.model.Fichaje;
 import com.example.controlpresencia.data.model.FichajeResponse;
+import com.example.controlpresencia.data.model.Incidencia;
 import com.example.controlpresencia.data.model.IncidenciaRequest;
 import com.example.controlpresencia.data.model.LoginResponse;
 import com.example.controlpresencia.data.model.FichajeRequest;
@@ -62,5 +63,11 @@ public interface ApiService {
     Call<FichajeResponse> ficharNFC(
             @Header("Authorization") String token,
             @Body FichajeRequest request
+    );
+
+    @GET("incidencias/empresa/{id}")
+    Call<List<Incidencia>> getIncidenciasEmpresa(
+            @Header("Authorization") String token,
+            @Path("id") int idEmpresa
     );
 }

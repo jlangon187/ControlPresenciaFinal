@@ -59,7 +59,6 @@ public class Fichaje {
 
             String totalTrabajado = String.format(Locale.getDefault(), "%dh %02dm", horasTrabajadas, minutosTrabajados);
 
-            // 1. Si hay horas extra (Se pasó del tiempo)
             if (horasExtra > 0) {
                 long extraMinutosTotales = Math.round(horasExtra * 60);
                 long hExtra = extraMinutosTotales / 60;
@@ -68,7 +67,6 @@ public class Fichaje {
                 return "Total: " + totalTrabajado + " | 🔥 Extra: +" + formatoExtra;
             }
 
-            // 2. Extraer cuántos minutos teóricos tenía que hacer leyendo su turno (ej. "16:00 a 19:00")
             long totalMinutosTeoricos = 0;
             if (turnoTeorico != null && turnoTeorico.contains(" a ")) {
                 try {
@@ -83,7 +81,6 @@ public class Fichaje {
                 } catch (Exception ignored) {}
             }
 
-            // 3. Si trabajó menos de lo teórico (le damos 6 min de margen como en la web)
             if (totalMinutosTeoricos > 0 && totalMinutosReales < (totalMinutosTeoricos - 6)) {
                 long faltanMinutos = totalMinutosTeoricos - totalMinutosReales;
                 long fH = faltanMinutos / 60;
@@ -92,7 +89,6 @@ public class Fichaje {
                 return "Total: " + totalTrabajado + " | ⚠️ Faltan: " + formatoFalta;
             }
 
-            // 4. Si cumplió sus horas clavaditas
             return "Total: " + totalTrabajado + " | ✔️ Cumplido";
 
         } catch (Exception e) {
@@ -113,11 +109,9 @@ public class Fichaje {
 
     private String formatearHora(String fechaIso) {
         try {
-            // La API devuelve: 2026-02-03T08:00:00
             SimpleDateFormat sdfInput = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault());
             Date date = sdfInput.parse(fechaIso);
 
-            // Queremos mostrar: 08:00
             SimpleDateFormat sdfOutput = new SimpleDateFormat("HH:mm", Locale.getDefault());
             return sdfOutput.format(date);
         } catch (ParseException e) {
@@ -127,7 +121,7 @@ public class Fichaje {
 
     public String getTurnoTeorico() {
         if (turnoTeorico == null || turnoTeorico.equals("Sin horario") || turnoTeorico.equals("Fuera de turno")) {
-            return ""; // Si no hay turno, no mostramos nada
+            return "";
         }
         return " | 🕒 " + turnoTeorico;
     }
@@ -135,4 +129,7 @@ public class Fichaje {
     public String getFecha() { return fecha; }
     public Double getLatitud() { return latitud; }
     public Double getLongitud() { return longitud; }
+    public double getHorasExtra() {
+        return horasExtra;
+    }
 }

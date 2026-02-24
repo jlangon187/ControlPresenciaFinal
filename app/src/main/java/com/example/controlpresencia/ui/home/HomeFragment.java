@@ -49,6 +49,7 @@ import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
 
+    private boolean isModoAdminActivo = false;
     private HomeViewModel viewModel;
     private SessionManager sessionManager;
     private ProgressBar progressBar;
@@ -127,30 +128,83 @@ public class HomeFragment extends Fragment {
             tvWelcome.setText("Hola, " + nombre);
         }
 
-        View dividerAdmin = view.findViewById(R.id.dividerAdmin);
-        TextView tvAdminTitle = view.findViewById(R.id.tvAdminTitle);
-        MaterialButton btnAdmin = view.findViewById(R.id.btnAdminPanel);
+        // --- LÓGICA DE ROLES (INTERRUPTOR DINÁMICO) ---
+        TextView tvStatus = view.findViewById(R.id.tvStatus);
+        MaterialButton btnAdminSwitch = view.findViewById(R.id.btnAdminPanel);
+        View cardAdminDashboard = view.findViewById(R.id.cardAdminDashboard);
+        TextView tvAdminDashboardTitle = view.findViewById(R.id.tvAdminDashboardTitle);
+        MaterialButton btnAdminAccion1 = view.findViewById(R.id.btnAdminAccion1);
+        MaterialButton btnAdminAccion2 = view.findViewById(R.id.btnAdminAccion2); // <--- Este es el de Incidencias
+        androidx.constraintlayout.widget.Group groupTrabajador = view.findViewById(R.id.groupTrabajador);
+
+        // 1. ESTADO BASE: Eres Trabajador
+        cardAdminDashboard.setVisibility(View.GONE);
+        groupTrabajador.setVisibility(View.VISIBLE);
+        btnAdminSwitch.setVisibility(View.GONE);
+        tvStatus.setText("Panel del Trabajador");
 
         if (sessionManager.isAdmin()) {
-            dividerAdmin.setVisibility(View.VISIBLE);
-            tvAdminTitle.setVisibility(View.VISIBLE);
-            btnAdmin.setVisibility(View.VISIBLE);
-
             if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
-                tvAdminTitle.setText("ZONA SUPERADMINISTRADOR");
-                btnAdmin.setText("SELECCIONAR EMPRESA");
-                map.setVisibility(View.GONE);
-            } else {
-                tvAdminTitle.setText("ZONA ADMINISTRADOR (Cargando...)");
-            }
+                // 2. MODO SUPERADMINISTRADOR (Fijo)
+                tvStatus.setText("Panel de Control Global");
+                groupTrabajador.setVisibility(View.GONE);
+                cardAdminDashboard.setVisibility(View.VISIBLE);
+                btnAdminSwitch.setVisibility(View.GONE);
 
-            btnAdmin.setOnClickListener(v -> {
-                if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
-                    mostrarDialogoEmpresas();
-                } else {
-                    Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment);
-                }
-            });
+                tvAdminDashboardTitle.setText("Centro de Control Global");
+                btnAdminAccion1.setText("VER TODAS LAS EMPRESAS");
+                btnAdminAccion2.setText("VER INCIDENCIAS GLOBALES");
+
+                // ENGANCHE PARA SUPERADMIN
+                btnAdminAccion1.setOnClickListener(v -> mostrarDialogoEmpresas());
+                btnAdminAccion2.setOnClickListener(v -> mostrarDialogoEmpresasParaIncidencias()); // <--- ¡AQUÍ!
+
+            } else {
+                // 3. MODO ADMINISTRADOR NORMAL (Tiene doble vida, usa la píldora)
+                btnAdminSwitch.setVisibility(View.VISIBLE);
+                btnAdminSwitch.setText("MODO ADMIN");
+
+                btnAdminSwitch.setOnClickListener(v -> {
+                    isModoAdminActivo = !isModoAdminActivo; // Invertimos el estado
+
+                    if (isModoAdminActivo) {
+                        // Cambiar a Vista Admin
+                        btnAdminSwitch.setText("MODO TRABAJADOR");
+                        btnAdminSwitch.setBackgroundColor(Color.parseColor("#3B82F6")); // Azul
+                        tvStatus.setText("Panel del Administrador");
+                        groupTrabajador.setVisibility(View.GONE);
+                        cardAdminDashboard.setVisibility(View.VISIBLE);
+
+                        String nombreEmpresa = (usuarioActual != null && usuarioActual.getEmpresa() != null)
+                                ? usuarioActual.getEmpresa().getNombre().toUpperCase()
+                                : "EMPRESA";
+                        tvAdminDashboardTitle.setText("Gestión: " + nombreEmpresa);
+                        btnAdminAccion1.setText("GESTIONAR MIS EMPLEADOS");
+                        btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
+
+                        // ENGANCHE PARA ADMIN NORMAL
+                        btnAdminAccion1.setOnClickListener(v2 -> Navigation.findNavController(v2).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment));
+                        btnAdminAccion2.setOnClickListener(v2 -> {
+                            // <--- ¡AQUÍ ESTÁ LA MAGIA DEL NAVEGADOR!
+                            if (usuarioActual != null && usuarioActual.getEmpresa() != null) {
+                                Bundle bundle = new Bundle();
+                                bundle.putInt("empresa_id", usuarioActual.getEmpresa().getIdEmpresa());
+                                Navigation.findNavController(v2).navigate(R.id.action_homeFragment_to_adminIncidenciasFragment, bundle);
+                            } else {
+                                Toast.makeText(getContext(), "Cargando datos de empresa...", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                    } else {
+                        // Cambiar a Vista Trabajador
+                        btnAdminSwitch.setText("MODO ADMIN");
+                        btnAdminSwitch.setBackgroundColor(Color.parseColor("#EA580C")); // Naranja
+                        tvStatus.setText("Panel del Trabajador");
+                        groupTrabajador.setVisibility(View.VISIBLE);
+                        cardAdminDashboard.setVisibility(View.GONE);
+                    }
+                });
+            }
         }
 
         // Pedir permiso de notificaciones para Android 13+
@@ -216,11 +270,6 @@ public class HomeFragment extends Fragment {
                 map.getOverlays().add(myLocationOverlay);
             }
 
-            if (sessionManager.isAdmin() && !sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
-                TextView tvAdminTitle = getView().findViewById(R.id.tvAdminTitle);
-                tvAdminTitle.setText("ZONA ADMIN - " + empresa.getNombre().toUpperCase());
-            }
-
             map.invalidate();
         }
     }
@@ -248,7 +297,6 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (nfcAdapter != null) {
-            // Encendemos el radar NFC
             android.os.Bundle options = new android.os.Bundle();
             options.putInt(android.nfc.NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250);
             nfcAdapter.enableReaderMode(requireActivity(), nfcCallback,
@@ -265,7 +313,6 @@ public class HomeFragment extends Fragment {
     public void onPause() {
         super.onPause();
         if (nfcAdapter != null) {
-            // Apagamos el radar NFC al salir de la app
             nfcAdapter.disableReaderMode(requireActivity());
         }
     }
@@ -312,26 +359,48 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    // --- LÓGICA NFC REAL ---
     private final android.nfc.NfcAdapter.ReaderCallback nfcCallback = tag -> {
-        // 1. Extraemos el número de serie (UID) del chip NFC
         byte[] id = tag.getId();
         String nfcUid = bytesToHex(id);
 
-        // 2. Volvemos al hilo principal de la pantalla para mostrar cosas
         requireActivity().runOnUiThread(() -> {
             Toast.makeText(getContext(), "¡Tarjeta NFC detectada! UID: " + nfcUid, Toast.LENGTH_SHORT).show();
             procesarFichajeNFC(nfcUid);
         });
     };
 
-    // Función auxiliar para convertir los bytes del chip en texto legible
     private String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
             sb.append(String.format("%02X", b));
         }
         return sb.toString();
+    }
+
+    private void mostrarDialogoEmpresasParaIncidencias() {
+        progressBar.setVisibility(View.VISIBLE);
+        String token = sessionManager.getToken();
+        RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
+            @Override
+            public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Empresa> lista = response.body();
+                    String[] nombres = new String[lista.size()];
+                    for (int i = 0; i < lista.size(); i++) nombres[i] = lista.get(i).getNombre();
+
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Selecciona Empresa (Incidencias)")
+                            .setItems(nombres, (dialog, which) -> {
+                                Bundle bundle = new Bundle();
+                                bundle.putInt("empresa_id", lista.get(which).getIdEmpresa());
+                                Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_adminIncidenciasFragment, bundle);
+                            }).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Empresa>> call, Throwable t) { progressBar.setVisibility(View.GONE); }
+        });
     }
 
     private void procesarFichajeNFC(String uidTarjeta) {
@@ -348,7 +417,6 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     Toast.makeText(getContext(), "✅ " + response.body().getMessage(), Toast.LENGTH_LONG).show();
                 } else {
-                    // Leer el motivo exacto por el que Flask rechaza el NFC
                     try {
                         if (response.errorBody() != null) {
                             String errorStr = response.errorBody().string();
