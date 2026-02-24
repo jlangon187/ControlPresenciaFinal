@@ -35,7 +35,7 @@ public class AdminHistorialAdapter extends RecyclerView.Adapter<AdminHistorialAd
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Fichaje item = lista.get(position);
 
-        holder.tvFecha.setText(item.getFecha());
+        holder.tvFecha.setText(item.getFecha() + item.getTurnoTeorico());
         holder.tvHoraEntrada.setText("🟢 " + item.getHoraEntradaFormateada());
         holder.tvHoraSalida.setText("🔴 " + item.getHoraSalidaFormateada());
         holder.tvTotalDia.setText(item.getTotalHoras());

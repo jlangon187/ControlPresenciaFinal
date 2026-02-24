@@ -96,6 +96,11 @@ public class HomeFragment extends Fragment {
             }
         });
 
+        MaterialButton btnSimularNfc = view.findViewById(R.id.btnSimularNfc);
+        btnSimularNfc.setOnClickListener(v -> {
+            procesarFichajeNFC("A1B2C3D4"); // Mandamos el código de la tarjeta mágica
+        });
+
         MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(v -> {
             sessionManager.clearSession();
@@ -330,8 +335,39 @@ public class HomeFragment extends Fragment {
     }
 
     private void procesarFichajeNFC(String uidTarjeta) {
-        // Aquí es donde mandaremos el UID al servidor para decirle "Oye, ficha a este tío"
-        android.util.Log.d("NFC_TEST", "El servidor va a procesar la tarjeta: " + uidTarjeta);
-        Toast.makeText(getContext(), "Procesando tarjeta: " + uidTarjeta, Toast.LENGTH_SHORT).show();
+        String token = sessionManager.getToken();
+        if (token == null) return;
+
+        progressBar.setVisibility(View.VISIBLE);
+        com.example.controlpresencia.data.model.FichajeRequest request = new com.example.controlpresencia.data.model.FichajeRequest(uidTarjeta);
+
+        RetrofitClient.getInstance().getMyApi().ficharNFC(token, request).enqueue(new Callback<com.example.controlpresencia.data.model.FichajeResponse>() {
+            @Override
+            public void onResponse(Call<com.example.controlpresencia.data.model.FichajeResponse> call, Response<com.example.controlpresencia.data.model.FichajeResponse> response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(getContext(), "✅ " + response.body().getMessage(), Toast.LENGTH_LONG).show();
+                } else {
+                    // Leer el motivo exacto por el que Flask rechaza el NFC
+                    try {
+                        if (response.errorBody() != null) {
+                            String errorStr = response.errorBody().string();
+                            org.json.JSONObject jsonObject = new org.json.JSONObject(errorStr);
+                            Toast.makeText(getContext(), "⚠️ " + jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(getContext(), "❌ Tarjeta rechazada", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(), "❌ Error al fichar por NFC", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<com.example.controlpresencia.data.model.FichajeResponse> call, Throwable t) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(getContext(), "⚠️ Error de conexión", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

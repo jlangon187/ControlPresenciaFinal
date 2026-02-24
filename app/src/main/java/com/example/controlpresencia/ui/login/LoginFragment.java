@@ -40,6 +40,13 @@ public class LoginFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        SessionManager sessionManager = new SessionManager(requireContext());
+        if (sessionManager.getToken() != null) {
+            NavController navController = Navigation.findNavController(view);
+            navController.navigate(R.id.action_loginFragment_to_homeFragment);
+            return; // Detenemos la carga de esta pantalla
+        }
+
         // 1. Inicializar vistas
         etEmail = view.findViewById(R.id.etEmail);
         etPassword = view.findViewById(R.id.etPassword);

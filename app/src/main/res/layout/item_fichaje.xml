@@ -14,28 +14,20 @@
 
         <TextView
             android:id="@+id/tvFecha"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="2026-02-03"
+            android:text="2026-02-23 | 🕒 16:00 a 19:00"
             android:textStyle="bold"
             android:textSize="16sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/tvTotalDia"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="8h 00m"
-            android:textStyle="bold"
-            android:textColor="#4CAF50"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
+            android:id="@+id/llHoras"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@+id/tvFecha">
 
@@ -44,7 +36,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="🟢 08:00" />
+                android:textSize="15sp"
+                android:text="🟢 08:00 📍 (GPS)" />
 
             <TextView
                 android:id="@+id/tvHoraSalida"
@@ -52,8 +45,21 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="end"
+                android:textSize="15sp"
                 android:text="🔴 16:00" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvTotalDia"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Total: 8h 00m | ✔️ Cumplido"
+            android:textStyle="bold"
+            android:textColor="#4CAF50"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/llHoras" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

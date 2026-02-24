@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void enviarFichajeAlServidor(String nfcUid) {
         SessionManager sessionManager = new SessionManager(this);
-        String token = sessionManager.getToken(); // Recupera la sesión guardada de Juan
+        String token = sessionManager.getToken();
 
         if (token == null) {
             Toast.makeText(this, "NFC: Inicia sesión en la App primero", Toast.LENGTH_LONG).show();
@@ -85,7 +85,17 @@ public class MainActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     Toast.makeText(MainActivity.this, "✅ " + response.body().getMessage(), Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(MainActivity.this, "❌ Error: Tarjeta no autorizada", Toast.LENGTH_SHORT).show();
+                    try {
+                        if (response.errorBody() != null) {
+                            String errorStr = response.errorBody().string();
+                            org.json.JSONObject jsonObject = new org.json.JSONObject(errorStr);
+                            Toast.makeText(MainActivity.this, "⚠️ " + jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "❌ Error: Tarjeta no autorizada", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "❌ Error procesando respuesta", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 

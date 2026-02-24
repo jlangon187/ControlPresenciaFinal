@@ -30,10 +30,23 @@ public class FichajesAdapter extends RecyclerView.Adapter<FichajesAdapter.Fichaj
     @Override
     public void onBindViewHolder(@NonNull FichajeViewHolder holder, int position) {
         Fichaje item = lista.get(position);
-        holder.tvFecha.setText(item.getFecha());
+        holder.tvFecha.setText(item.getFecha() + item.getTurnoTeorico());
         holder.tvHoraEntrada.setText("🟢 " + item.getHoraEntradaFormateada());
         holder.tvHoraSalida.setText("🔴 " + item.getHoraSalidaFormateada());
         holder.tvTotalDia.setText(item.getTotalHoras());
+
+        String textoTotal = item.getTotalHoras();
+        holder.tvTotalDia.setText(textoTotal);
+
+        if (textoTotal.contains("⚠️ Faltan")) {
+            holder.tvTotalDia.setTextColor(android.graphics.Color.parseColor("#E53935")); // Rojo
+        } else if (textoTotal.contains("🔥 Extra")) {
+            holder.tvTotalDia.setTextColor(android.graphics.Color.parseColor("#FB8C00")); // Naranja
+        } else if (textoTotal.contains("⏱️")) {
+            holder.tvTotalDia.setTextColor(android.graphics.Color.parseColor("#757575")); // Gris
+        } else {
+            holder.tvTotalDia.setTextColor(android.graphics.Color.parseColor("#4CAF50")); // Verde
+        }
     }
 
     @Override
