@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.controlpresencia.data.local.SessionManager;
 import com.example.controlpresencia.data.model.FichajeRequest;
@@ -22,11 +23,15 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Si la app se abre de golpe por NFC
-        if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(getIntent().getAction())) {
+        String action = getIntent().getAction();
+        if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action) ||
+                NfcAdapter.ACTION_TECH_DISCOVERED.equals(action) ||
+                NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
+
             procesarIntencionNFC(getIntent());
         }
     }
@@ -34,26 +39,23 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        // Si la app ya estaba abierta en segundo plano y pasamos el NFC
-        if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
+        setIntent(intent);
+
+        String action = intent.getAction();
+        if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action) ||
+                NfcAdapter.ACTION_TECH_DISCOVERED.equals(action) ||
+                NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
+
             procesarIntencionNFC(intent);
         }
     }
 
     private void procesarIntencionNFC(Intent intent) {
-        // 1. MODO REAL: Cuando tengas el teléfono físico con NFC
         Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (tag != null) {
             byte[] id = tag.getId();
             String nfcUid = bytesToHex(id);
             enviarFichajeAlServidor(nfcUid);
-            return;
-        }
-
-        // 2. MODO SIMULADOR: Para probar AHORA MISMO en tu emulador
-        String simulatedId = intent.getStringExtra("simulated_nfc_id");
-        if (simulatedId != null) {
-            enviarFichajeAlServidor(simulatedId);
         }
     }
 
@@ -69,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         SessionManager sessionManager = new SessionManager(this);
         String token = sessionManager.getToken();
 
-        if (token == null) {
+        if (token == null || token.isEmpty()) {
             Toast.makeText(this, "NFC: Inicia sesión en la App primero", Toast.LENGTH_LONG).show();
             return;
         }

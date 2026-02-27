@@ -42,6 +42,12 @@ public class MapDetailFragment extends Fragment {
         TextView tvFecha = view.findViewById(R.id.tvMapFecha);
         TextView tvHoras = view.findViewById(R.id.tvMapHoras);
 
+        // Lógica para el botón volver
+        View btnVolver = view.findViewById(R.id.btnVolverMapa);
+        if (btnVolver != null) {
+            btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());
+        }
+
         if (getArguments() != null) {
             double lat = getArguments().getDouble("lat");
             double lng = getArguments().getDouble("lng");

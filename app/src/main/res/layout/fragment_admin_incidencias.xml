@@ -10,34 +10,56 @@
     <View
         android:id="@+id/headerBgIncidencias"
         android:layout_width="match_parent"
-        android:layout_height="140dp"
+        android:layout_height="240dp"
         android:background="@color/header_bg"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvTituloIncidencias"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="16dp"
         android:text="Gestión de Incidencias"
         android:textColor="@color/white"
-        android:textSize="22sp"
+        android:textSize="24sp"
         android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/btnVolverAdminIncidencias"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvSubtituloIncidencias"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
         android:text="Tickets reportados por los empleados"
         android:textColor="@color/text_header_sub"
         android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/btnVolverAdminIncidencias"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvTituloIncidencias" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnVolverAdminIncidencias"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="42dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginEnd="16dp"
+        android:text="Volver"
+        android:textColor="#EA580C"
+        app:cornerRadius="20dp"
+        app:strokeColor="#EA580C"
+        app:strokeWidth="1dp"
+        app:icon="@android:drawable/ic_menu_revert"
+        app:iconTint="#EA580C"
+        app:iconSize="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressBarIncidencias"
@@ -54,12 +76,14 @@
         android:id="@+id/rvIncidencias"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="25dp"
         android:clipToPadding="false"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="24dp"
         android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/headerBgIncidencias"
+        app:layout_constraintTop_toBottomOf="@+id/tvSubtituloIncidencias"
+        app:layout_constraintVertical_bias="1.0"
+        tools:layout_editor_absoluteX="0dp"
         tools:listitem="@layout/item_incidencia" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

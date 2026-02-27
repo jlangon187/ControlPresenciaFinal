@@ -44,7 +44,13 @@ public class IncidenciaFragment extends Fragment {
         etTitulo = view.findViewById(R.id.etTituloIncidencia);
         etDescripcion = view.findViewById(R.id.etDescripcionIncidencia);
         btnEnviar = view.findViewById(R.id.btnEnviarIncidencia);
+        progressBar = view.findViewById(R.id.progressBarIncidencia);
         btnEnviar.setOnClickListener(v -> enviarIncidencia());
+
+        View btnVolver = view.findViewById(R.id.btnVolverIncidencia);
+        if (btnVolver != null) {
+            btnVolver.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
+        }
     }
 
     private void enviarIncidencia() {
@@ -65,12 +71,13 @@ public class IncidenciaFragment extends Fragment {
         RetrofitClient.getInstance().getMyApi().crearIncidencia(token, request).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
+                if (getView() == null) return;
+
                 progressBar.setVisibility(View.GONE);
                 btnEnviar.setEnabled(true);
 
                 if (response.isSuccessful()) {
                     Toast.makeText(getContext(), "✅ Incidencia enviada correctamente", Toast.LENGTH_LONG).show();
-                    // Volver atrás (al Home)
                     Navigation.findNavController(getView()).navigateUp();
                 } else {
                     Toast.makeText(getContext(), "Error al enviar: " + response.code(), Toast.LENGTH_SHORT).show();
@@ -79,6 +86,8 @@ public class IncidenciaFragment extends Fragment {
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
+                if (getView() == null) return;
+
                 progressBar.setVisibility(View.GONE);
                 btnEnviar.setEnabled(true);
                 Toast.makeText(getContext(), "Fallo de conexión", Toast.LENGTH_SHORT).show();

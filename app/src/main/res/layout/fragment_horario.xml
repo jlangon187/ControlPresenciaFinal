@@ -1,34 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/app_bg">
+    android:background="@color/app_bg"
+    tools:context=".ui.horario.HorarioFragment">
 
     <View
-        android:id="@+id/headerBg"
+        android:id="@+id/headerBgHorario"
         android:layout_width="match_parent"
         android:layout_height="240dp"
         android:background="@color/header_bg"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tvTitle"
+        android:id="@+id/tvTituloHorario"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="50dp"
-        android:layout_marginEnd="8dp"
-        android:text="Mi Historial"
+        android:layout_marginEnd="16dp"
+        android:text="Mi Horario Semanal"
         android:textColor="@color/white"
         android:textSize="24sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/btnFiltrar"
+        app:layout_constraintEnd_toStartOf="@+id/btnVolverHorario"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/tvSubtituloHorario"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:text="Turnos y jornada asignada"
+        android:textColor="@color/text_header_sub"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/btnVolverHorario"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvTituloHorario" />
+
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnVolverFichajes"
+        android:id="@+id/btnVolverHorario"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="42dp"
@@ -45,23 +61,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnFiltrar"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+    <ProgressBar
+        android:id="@+id/progressBarHorario"
         android:layout_width="wrap_content"
-        android:layout_height="42dp"
-        android:layout_marginEnd="4dp"
-        android:text="Filtrar"
-        android:textColor="@color/white"
-        app:icon="@android:drawable/ic_menu_my_calendar"
-        app:iconTint="@color/white"
-        app:iconSize="20dp"
-        app:layout_constraintBottom_toBottomOf="@+id/btnVolverFichajes"
-        app:layout_constraintEnd_toStartOf="@+id/btnVolverFichajes"
-        app:layout_constraintTop_toTopOf="@+id/btnVolverFichajes" />
+        android:layout_height="wrap_content"
+        android:elevation="10dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardResumen"
+        android:id="@+id/cardResumenHorario"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
@@ -89,18 +101,18 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Total Trabajado"
+                    android:text="Tipo de Jornada"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
-                    android:id="@+id/tvResumenTrabajado"
+                    android:id="@+id/tvTipoJornada"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="0h 00m"
+                    android:text="--"
                     android:textColor="#3B82F6"
-                    android:textSize="26sp"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -114,25 +126,25 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Horas Extra"
+                    android:text="Horas Semanales"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
-                    android:id="@+id/tvResumenExtra"
+                    android:id="@+id/tvHorasSemanales"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="0h 00m"
-                    android:textColor="#F59E0B"
-                    android:textSize="26sp"
+                    android:text="--"
+                    android:textColor="#10B981"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvFichajes"
+        android:id="@+id/rvDiasHorario"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
@@ -140,6 +152,7 @@
         android:paddingHorizontal="24dp"
         android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardResumen" />
+        app:layout_constraintTop_toBottomOf="@+id/cardResumenHorario"
+        tools:listitem="@layout/item_horario" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

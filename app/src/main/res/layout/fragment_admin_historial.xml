@@ -8,7 +8,7 @@
     <View
         android:id="@+id/headerBgAdmin"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
+        android:layout_height="240dp"
         android:background="@color/header_bg"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -17,40 +17,61 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="50dp"
         android:layout_marginEnd="8dp"
         android:text="Historial de Empleado"
         android:textColor="@color/white"
-        android:textSize="20sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/btnAdminFiltrar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnVolverAdminHistorial"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="42dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginEnd="16dp"
+        android:text="Volver"
+        android:textColor="#EA580C"
+        app:cornerRadius="20dp"
+        app:strokeColor="#EA580C"
+        app:strokeWidth="1dp"
+        app:icon="@android:drawable/ic_menu_revert"
+        app:iconTint="#EA580C"
+        app:iconSize="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAdminFiltrar"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="16dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="4dp"
         android:text="Filtrar"
-        android:textColor="#EA580C"
+        android:textColor="@color/white"
         app:icon="@android:drawable/ic_menu_my_calendar"
-        app:iconTint="#EA580C"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:iconTint="@color/white"
+        app:iconSize="20dp"
+        app:layout_constraintBottom_toBottomOf="@+id/btnVolverAdminHistorial"
+        app:layout_constraintEnd_toStartOf="@+id/btnVolverAdminHistorial"
+        app:layout_constraintTop_toTopOf="@+id/btnVolverAdminHistorial" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardAdminResumen"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="170dp"
         app:cardBackgroundColor="@color/white"
         app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
-        app:layout_constraintTop_toBottomOf="@+id/tvTituloHistorialAdmin">
+        app:cardElevation="10dp"
+        app:strokeColor="#E2E8F0"
+        app:strokeWidth="1dp"
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -70,7 +91,7 @@
                     android:layout_height="wrap_content"
                     android:text="Total Trabajado"
                     android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/tvAdminResumenTrabajado"
@@ -95,7 +116,7 @@
                     android:layout_height="wrap_content"
                     android:text="Horas Extra"
                     android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/tvAdminResumenExtra"
@@ -116,7 +137,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         android:clipToPadding="false"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="24dp"
         android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cardAdminResumen" />

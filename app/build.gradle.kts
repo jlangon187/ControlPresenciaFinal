@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.firebase.appdistribution.gradle)
     implementation(libs.osmdroid.android)
     implementation(libs.firebase.messaging)
+    implementation(libs.preference)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

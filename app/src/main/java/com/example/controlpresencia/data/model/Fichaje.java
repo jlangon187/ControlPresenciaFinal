@@ -64,7 +64,7 @@ public class Fichaje {
                 long hExtra = extraMinutosTotales / 60;
                 long mExtra = extraMinutosTotales % 60;
                 String formatoExtra = String.format(Locale.getDefault(), "%dh %02dm", hExtra, mExtra);
-                return "Total: " + totalTrabajado + " | 🔥 Extra: +" + formatoExtra;
+                return "Total: " + totalTrabajado + " | Extra: +" + formatoExtra;
             }
 
             long totalMinutosTeoricos = 0;

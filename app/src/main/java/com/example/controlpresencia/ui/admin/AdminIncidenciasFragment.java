@@ -1,6 +1,5 @@
 package com.example.controlpresencia.ui.admin;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,13 +11,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.controlpresencia.R;
 import com.example.controlpresencia.data.local.SessionManager;
-// Importa tu modelo real de Incidencia (ajusta el paquete si es distinto)
 import com.example.controlpresencia.data.model.Incidencia;
 import com.example.controlpresencia.data.network.RetrofitClient;
 
@@ -50,21 +47,23 @@ public class AdminIncidenciasFragment extends Fragment {
         rvIncidencias = view.findViewById(R.id.rvIncidencias);
         progressBar = view.findViewById(R.id.progressBarIncidencias);
 
-        // Configurar la lista
         rvIncidencias.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new IncidenciasAdapter(new ArrayList<>());
         rvIncidencias.setAdapter(adapter);
 
-        // 1. Recoger el ID de la empresa que nos manda el HomeFragment
         if (getArguments() != null) {
             empresaId = getArguments().getInt("empresa_id", -1);
         }
 
-        // 2. Cargar los datos
         if (empresaId != -1) {
             cargarIncidencias(empresaId);
         } else {
             Toast.makeText(getContext(), "Error: No se recibió la empresa", Toast.LENGTH_SHORT).show();
+        }
+
+        View btnVolver = view.findViewById(R.id.btnVolverAdminIncidencias);
+        if (btnVolver != null) {
+            btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());
         }
     }
 
@@ -72,30 +71,29 @@ public class AdminIncidenciasFragment extends Fragment {
         progressBar.setVisibility(View.VISIBLE);
         String token = sessionManager.getToken();
 
-        // IMPORTANTE: Asegúrate de que en tu MyApi.java tienes un endpoint para esto.
-        // Ejemplo: getIncidenciasEmpresa(token, idEmpresa)
         RetrofitClient.getInstance().getMyApi().getIncidenciasEmpresa(token, idEmpresa).enqueue(new Callback<List<Incidencia>>() {
             @Override
             public void onResponse(Call<List<Incidencia>> call, Response<List<Incidencia>> response) {
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
-                    adapter.setLista(response.body());
+                    if (response.body().isEmpty()) {
+                        Toast.makeText(getContext(), "La base de datos devolvió 0 incidencias", Toast.LENGTH_LONG).show();
+                    } else {
+                        adapter.setLista(response.body());
+                    }
                 } else {
-                    Toast.makeText(getContext(), "No hay incidencias o hubo un error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Error del servidor: Código " + response.code(), Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<List<Incidencia>> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(getContext(), "Error de red", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Fallo en la App: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    // =========================================================================
-    // ADAPTADOR INTERNO PARA EL RECYCLERVIEW (Pinta los datos en el XML)
-    // =========================================================================
     private class IncidenciasAdapter extends RecyclerView.Adapter<IncidenciasAdapter.ViewHolder> {
         private List<Incidencia> lista;
 
@@ -119,25 +117,17 @@ public class AdminIncidenciasFragment extends Fragment {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Incidencia incidencia = lista.get(position);
 
-            // CUIDADO: Revisa que estos "get" coinciden con tu clase Incidencia
             holder.tvAsunto.setText(incidencia.getTitulo() != null ? incidencia.getTitulo() : "Sin Asunto");
             holder.tvDescripcion.setText(incidencia.getDescripcion());
 
-            // Asumiendo que guardas el nombre del empleado o la fecha
-            // Si no tienes estos datos directos, ajústalos según tu modelo
-            holder.tvEmpleadoFecha.setText("Fecha: " + incidencia.getFecha());
-
-            // Lógica de colores para la Píldora de Estado
-            String estado = incidencia.getEstado() != null ? incidencia.getEstado().toUpperCase() : "PENDIENTE";
-            holder.tvEstado.setText(estado);
-
-            if (estado.equals("RESUELTA") || estado.equals("APROBADA")) {
-                holder.tvEstado.setTextColor(Color.parseColor("#10B981")); // Verde
-                holder.cardEstado.setCardBackgroundColor(Color.parseColor("#D1FAE5")); // Fondo Verde clarito
-            } else {
-                holder.tvEstado.setTextColor(Color.parseColor("#EF4444")); // Rojo
-                holder.cardEstado.setCardBackgroundColor(Color.parseColor("#FEE2E2")); // Fondo Rojo clarito
+            String empleado = incidencia.getEmpleadoNombre() != null ? incidencia.getEmpleadoNombre() : "Desconocido";
+            String fecha = incidencia.getFecha() != null ? incidencia.getFecha() : "";
+            String fechaformateada = fecha.substring(0, 10);
+            String[] partes = fechaformateada.split("-");
+            if (partes.length == 3) {
+                fechaformateada = fecha.substring(11, 16) + " - " + partes[2] + "/" + partes[1] + "/" + partes[0];
             }
+            holder.tvEmpleadoFecha.setText(empleado + "\n" + fechaformateada);
         }
 
         @Override
@@ -146,16 +136,13 @@ public class AdminIncidenciasFragment extends Fragment {
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tvAsunto, tvEmpleadoFecha, tvDescripcion, tvEstado;
-            com.google.android.material.card.MaterialCardView cardEstado;
+            TextView tvAsunto, tvEmpleadoFecha, tvDescripcion;
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvAsunto = itemView.findViewById(R.id.tvAsuntoIncidencia);
                 tvEmpleadoFecha = itemView.findViewById(R.id.tvEmpleadoFecha);
                 tvDescripcion = itemView.findViewById(R.id.tvDescripcionIncidencia);
-                tvEstado = itemView.findViewById(R.id.tvEstadoIncidencia);
-                cardEstado = itemView.findViewById(R.id.cardEstado);
             }
         }
     }

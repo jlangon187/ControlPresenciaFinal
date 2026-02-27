@@ -62,6 +62,13 @@ public class AdminHistorialFragment extends Fragment {
             tvTitulo.setText("Historial de " + nombreTrabajador);
         }
 
+        // Lógica para el botón volver
+        View btnVolver = view.findViewById(R.id.btnVolverAdminHistorial);
+        if (btnVolver != null) {
+            btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());
+        }
+
+        // Lógica para el botón filtrar
         view.findViewById(R.id.btnAdminFiltrar).setOnClickListener(v -> mostrarCalendario());
 
         cargarHistorial();

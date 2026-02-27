@@ -25,6 +25,7 @@ import androidx.navigation.Navigation;
 
 import com.example.controlpresencia.R;
 import com.example.controlpresencia.data.local.SessionManager;
+import com.example.controlpresencia.data.model.AdminStatsResponse;
 import com.example.controlpresencia.data.model.Empresa;
 import com.example.controlpresencia.data.model.User;
 import com.example.controlpresencia.data.network.RetrofitClient;
@@ -49,7 +50,8 @@ import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
 
-    private boolean isModoAdminActivo = false;
+    // --- VARIABLES ---
+    private static boolean isModoAdminActivo = false;
     private HomeViewModel viewModel;
     private SessionManager sessionManager;
     private ProgressBar progressBar;
@@ -59,7 +61,10 @@ public class HomeFragment extends Fragment {
     private FusedLocationProviderClient fusedLocationClient;
     private static final int REQUEST_LOCATION_PERMISSION = 100;
     private android.nfc.NfcAdapter nfcAdapter;
-    private String uidSimulado = "A1B2C3D4";
+
+    // =========================================================================
+    // 1. CICLO DE VIDA
+    // =========================================================================
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -75,7 +80,9 @@ public class HomeFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
         viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
+        nfcAdapter = android.nfc.NfcAdapter.getDefaultAdapter(requireContext());
 
+        // Vincular Vistas
         Button btnHistorial = view.findViewById(R.id.btnVerHistorial);
         progressBar = view.findViewById(R.id.progressBarHome);
         btnEntrada = view.findViewById(R.id.btnEntrada);
@@ -83,129 +90,31 @@ public class HomeFragment extends Fragment {
         btnReportarIncidencia = view.findViewById(R.id.btnReportarIncidencia);
         map = view.findViewById(R.id.map);
 
+        // Configurar Mapa
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
         map.getController().setZoom(18.0);
 
-        nfcAdapter = android.nfc.NfcAdapter.getDefaultAdapter(requireContext());
-
-        btnEntrada.setOnClickListener(v -> {
-            if (checkPermission()) {
-                obtenerUbicacionYFichar();
-            } else {
-                pedirPermisoGPS();
-            }
-        });
-
-        MaterialButton btnSimularNfc = view.findViewById(R.id.btnSimularNfc);
-        btnSimularNfc.setOnClickListener(v -> {
-            procesarFichajeNFC("A1B2C3D4"); // Mandamos el código de la tarjeta mágica
-        });
-
-        MaterialButton btnLogout = view.findViewById(R.id.btnLogout);
-        btnLogout.setOnClickListener(v -> {
-            sessionManager.clearSession();
-
-            androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
-                    .setPopUpTo(R.id.homeFragment, true)
-                    .build();
-
-            Navigation.findNavController(v).navigate(R.id.loginFragment, null, navOptions);
-        });
-
-        btnHistorial.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_fichajesFragment));
-
-        btnSalida.setOnClickListener(v -> {
-            String token = sessionManager.getToken();
-            if (token != null) viewModel.ficharSalida(token);
-        });
-
-        btnReportarIncidencia.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_incidenciaFragment));
-
+        // Saludo
         TextView tvWelcome = view.findViewById(R.id.tvWelcome);
         String nombre = sessionManager.getNombre();
         if (nombre != null && !nombre.isEmpty()) {
-            tvWelcome.setText("Hola, " + nombre);
+            String nombreSolo = nombre.split(" ")[0];
+            tvWelcome.setText("Hola, " + nombreSolo);
         }
 
-        // --- LÓGICA DE ROLES (INTERRUPTOR DINÁMICO) ---
-        TextView tvStatus = view.findViewById(R.id.tvStatus);
-        MaterialButton btnAdminSwitch = view.findViewById(R.id.btnAdminPanel);
-        View cardAdminDashboard = view.findViewById(R.id.cardAdminDashboard);
-        TextView tvAdminDashboardTitle = view.findViewById(R.id.tvAdminDashboardTitle);
-        MaterialButton btnAdminAccion1 = view.findViewById(R.id.btnAdminAccion1);
-        MaterialButton btnAdminAccion2 = view.findViewById(R.id.btnAdminAccion2); // <--- Este es el de Incidencias
-        androidx.constraintlayout.widget.Group groupTrabajador = view.findViewById(R.id.groupTrabajador);
+        // Fecha
+        TextView tvAdminFechaLocal = view.findViewById(R.id.tvAdminFechaLocal);
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("EEEE, d 'de' MMMM", new java.util.Locale("es", "ES"));
+        String fechaBonita = sdf.format(new java.util.Date());
+        fechaBonita = fechaBonita.substring(0, 1).toUpperCase() + fechaBonita.substring(1);
+        tvAdminFechaLocal.setText(fechaBonita);
 
-        // 1. ESTADO BASE: Eres Trabajador
-        cardAdminDashboard.setVisibility(View.GONE);
-        groupTrabajador.setVisibility(View.VISIBLE);
-        btnAdminSwitch.setVisibility(View.GONE);
-        tvStatus.setText("Panel del Trabajador");
+        // Configurar Botones
+        configurarBotones(view, btnHistorial);
 
-        if (sessionManager.isAdmin()) {
-            if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
-                // 2. MODO SUPERADMINISTRADOR (Fijo)
-                tvStatus.setText("Panel de Control Global");
-                groupTrabajador.setVisibility(View.GONE);
-                cardAdminDashboard.setVisibility(View.VISIBLE);
-                btnAdminSwitch.setVisibility(View.GONE);
-
-                tvAdminDashboardTitle.setText("Centro de Control Global");
-                btnAdminAccion1.setText("VER TODAS LAS EMPRESAS");
-                btnAdminAccion2.setText("VER INCIDENCIAS GLOBALES");
-
-                // ENGANCHE PARA SUPERADMIN
-                btnAdminAccion1.setOnClickListener(v -> mostrarDialogoEmpresas());
-                btnAdminAccion2.setOnClickListener(v -> mostrarDialogoEmpresasParaIncidencias()); // <--- ¡AQUÍ!
-
-            } else {
-                // 3. MODO ADMINISTRADOR NORMAL (Tiene doble vida, usa la píldora)
-                btnAdminSwitch.setVisibility(View.VISIBLE);
-                btnAdminSwitch.setText("MODO ADMIN");
-
-                btnAdminSwitch.setOnClickListener(v -> {
-                    isModoAdminActivo = !isModoAdminActivo; // Invertimos el estado
-
-                    if (isModoAdminActivo) {
-                        // Cambiar a Vista Admin
-                        btnAdminSwitch.setText("MODO TRABAJADOR");
-                        btnAdminSwitch.setBackgroundColor(Color.parseColor("#3B82F6")); // Azul
-                        tvStatus.setText("Panel del Administrador");
-                        groupTrabajador.setVisibility(View.GONE);
-                        cardAdminDashboard.setVisibility(View.VISIBLE);
-
-                        String nombreEmpresa = (usuarioActual != null && usuarioActual.getEmpresa() != null)
-                                ? usuarioActual.getEmpresa().getNombre().toUpperCase()
-                                : "EMPRESA";
-                        tvAdminDashboardTitle.setText("Gestión: " + nombreEmpresa);
-                        btnAdminAccion1.setText("GESTIONAR MIS EMPLEADOS");
-                        btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
-
-                        // ENGANCHE PARA ADMIN NORMAL
-                        btnAdminAccion1.setOnClickListener(v2 -> Navigation.findNavController(v2).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment));
-                        btnAdminAccion2.setOnClickListener(v2 -> {
-                            // <--- ¡AQUÍ ESTÁ LA MAGIA DEL NAVEGADOR!
-                            if (usuarioActual != null && usuarioActual.getEmpresa() != null) {
-                                Bundle bundle = new Bundle();
-                                bundle.putInt("empresa_id", usuarioActual.getEmpresa().getIdEmpresa());
-                                Navigation.findNavController(v2).navigate(R.id.action_homeFragment_to_adminIncidenciasFragment, bundle);
-                            } else {
-                                Toast.makeText(getContext(), "Cargando datos de empresa...", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-
-                    } else {
-                        // Cambiar a Vista Trabajador
-                        btnAdminSwitch.setText("MODO ADMIN");
-                        btnAdminSwitch.setBackgroundColor(Color.parseColor("#EA580C")); // Naranja
-                        tvStatus.setText("Panel del Trabajador");
-                        groupTrabajador.setVisibility(View.VISIBLE);
-                        cardAdminDashboard.setVisibility(View.GONE);
-                    }
-                });
-            }
-        }
+        // Configurar Vista de Roles (Admin vs Trabajador)
+        configurarPanelRoles(view);
 
         // Pedir permiso de notificaciones para Android 13+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -214,6 +123,7 @@ public class HomeFragment extends Fragment {
             }
         }
 
+        // Observadores del ViewModel
         viewModel.getStatusMessage().observe(getViewLifecycleOwner(), mensaje -> Toast.makeText(getContext(), mensaje, Toast.LENGTH_LONG).show());
 
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
@@ -225,20 +135,194 @@ public class HomeFragment extends Fragment {
         cargarPerfilEmpresa();
     }
 
-    private void cargarPerfilEmpresa() {
-        String token = sessionManager.getToken();
-        RetrofitClient.getInstance().getMyApi().getPerfil(token).enqueue(new Callback<User>() {
-            @Override
-            public void onResponse(Call<User> call, Response<User> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    usuarioActual = response.body();
-                    actualizarMapa();
-                }
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (nfcAdapter != null) {
+            android.os.Bundle options = new android.os.Bundle();
+            options.putInt(android.nfc.NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250);
+            nfcAdapter.enableReaderMode(requireActivity(), nfcCallback,
+                    android.nfc.NfcAdapter.FLAG_READER_NFC_A |
+                            android.nfc.NfcAdapter.FLAG_READER_NFC_B |
+                            android.nfc.NfcAdapter.FLAG_READER_NFC_F |
+                            android.nfc.NfcAdapter.FLAG_READER_NFC_V |
+                            android.nfc.NfcAdapter.FLAG_READER_NFC_BARCODE,
+                    options);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (nfcAdapter != null) {
+            nfcAdapter.disableReaderMode(requireActivity());
+        }
+    }
+
+    // =========================================================================
+    // 2. CONFIGURACIÓN DE VISTAS (Lógica visual)
+    // =========================================================================
+
+    private void configurarBotones(View view, Button btnHistorial) {
+        // Navegación
+        btnHistorial.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_fichajesFragment));
+        btnReportarIncidencia.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_incidenciaFragment));
+
+        // Botón Fichar Entrada (Mantiene el requisito de GPS)
+        btnEntrada.setOnClickListener(v -> {
+            if (checkPermission()) {
+                obtenerUbicacionYFichar();
+            } else {
+                pedirPermisoGPS();
             }
-            @Override
-            public void onFailure(Call<User> call, Throwable t) { }
+        });
+
+        // Botón Fichar Salida (SIN GPS, va directo)
+        btnSalida.setOnClickListener(v -> {
+            String token = sessionManager.getToken();
+            if (token != null) {
+                viewModel.ficharSalida(token); // Directamente lanza la salida
+            } else {
+                Toast.makeText(getContext(), "Error de sesión", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Botón Ver Horario
+        view.findViewById(R.id.btnVerHorario).setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_horarioFragment));
+
+        // Botón Cerrar Sesión con confirmación
+        view.findViewById(R.id.btnLogout).setOnClickListener(v -> {
+            new android.app.AlertDialog.Builder(requireContext())
+                    .setTitle("Cerrar Sesión")
+                    .setMessage("¿Estás seguro de que deseas salir de tu cuenta?")
+                    .setPositiveButton("Sí, salir", (dialog, which) -> {
+                        logout();
+                    })
+                    .setNegativeButton("Cancelar", (dialog, which) -> {
+                        dialog.dismiss();
+                    })
+                    .show()
+                    .getButton(android.app.AlertDialog.BUTTON_POSITIVE).setTextColor(Color.parseColor("#EF4444"));
         });
     }
+
+    private void configurarPanelRoles(View view) {
+        TextView tvStatus = view.findViewById(R.id.tvStatus);
+        MaterialButton btnAdminSwitch = view.findViewById(R.id.btnAdminPanel);
+        View cardAdminDashboard = view.findViewById(R.id.cardAdminDashboard);
+        TextView tvAdminDashboardTitle = view.findViewById(R.id.tvAdminDashboardTitle);
+        MaterialButton btnAdminAccion1 = view.findViewById(R.id.btnAdminAccion1);
+        MaterialButton btnAdminAccion2 = view.findViewById(R.id.btnAdminAccion2);
+        MaterialButton btnAdminAccion3 = view.findViewById(R.id.btnAdminUbicacion);
+
+        androidx.constraintlayout.widget.Group groupTrabajador = view.findViewById(R.id.groupTrabajador);
+
+        if (sessionManager.isAdmin()) {
+            if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
+                // MODO SUPERADMINISTRADOR
+                tvStatus.setText("Panel de Control Global");
+                groupTrabajador.setVisibility(View.GONE);
+                cardAdminDashboard.setVisibility(View.VISIBLE);
+                btnAdminSwitch.setVisibility(View.GONE);
+
+                cargarEstadisticasAdmin(view);
+
+                tvAdminDashboardTitle.setText("Centro de Control Global");
+                btnAdminAccion1.setText("GESTIONAR EMPLEADOS");
+                btnAdminAccion2.setText("VER INCIDENCIAS");
+                btnAdminAccion3.setText("CONFIGURAR UBICACIÓN");
+
+                btnAdminAccion1.setOnClickListener(v -> mostrarDialogoEmpresas());
+                btnAdminAccion2.setOnClickListener(v -> mostrarDialogoEmpresasParaIncidencias());
+                btnAdminAccion3.setOnClickListener(v -> mostrarDialogoEmpresasParaConfigurarMapa());
+
+            } else {
+                // MODO ADMINISTRADOR (Con Memoria)
+                btnAdminSwitch.setVisibility(View.VISIBLE);
+
+                // --- APLICAR ESTADO GUARDADO AL CARGAR LA PANTALLA ---
+                if (isModoAdminActivo) {
+                    btnAdminSwitch.setText("MODO TRABAJADOR");
+                    btnAdminSwitch.setBackgroundColor(Color.parseColor("#3B82F6"));
+                    tvStatus.setText("Panel del Administrador");
+                    groupTrabajador.setVisibility(View.GONE);
+                    cardAdminDashboard.setVisibility(View.VISIBLE);
+
+                    cargarEstadisticasAdmin(view);
+
+                    String nombreEmpresa = (usuarioActual != null && usuarioActual.getEmpresa() != null)
+                            ? usuarioActual.getEmpresa().getNombre().toUpperCase() : "EMPRESA";
+                    tvAdminDashboardTitle.setText("Gestión: " + nombreEmpresa);
+                    btnAdminAccion1.setText("GESTIONAR MIS EMPLEADOS");
+                    btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
+                } else {
+                    btnAdminSwitch.setText("MODO ADMIN");
+                    btnAdminSwitch.setBackgroundColor(Color.parseColor("#EA580C"));
+                    tvStatus.setText("Panel del Trabajador");
+                    groupTrabajador.setVisibility(View.VISIBLE);
+                    cardAdminDashboard.setVisibility(View.GONE);
+                }
+
+                // --- ACCIONES DE LOS BOTONES ---
+                btnAdminAccion1.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment));
+                btnAdminAccion2.setOnClickListener(v -> {
+                    if (usuarioActual != null && usuarioActual.getEmpresa() != null) {
+                        Bundle bundle = new Bundle();
+                        bundle.putInt("empresa_id", usuarioActual.getEmpresa().getIdEmpresa());
+                        Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminIncidenciasFragment, bundle);
+                    }
+                });
+
+                // --- ACCIÓN DEL INTERRUPTOR ---
+                btnAdminSwitch.setOnClickListener(v -> {
+                    isModoAdminActivo = !isModoAdminActivo;
+
+                    if (isModoAdminActivo) {
+                        btnAdminSwitch.setText("MODO TRABAJADOR");
+                        btnAdminSwitch.setBackgroundColor(Color.parseColor("#3B82F6"));
+                        tvStatus.setText("Panel del Administrador");
+                        groupTrabajador.setVisibility(View.GONE);
+                        cardAdminDashboard.setVisibility(View.VISIBLE);
+
+                        cargarEstadisticasAdmin(view);
+
+                        String nombreEmpresa = (usuarioActual != null && usuarioActual.getEmpresa() != null)
+                                ? usuarioActual.getEmpresa().getNombre().toUpperCase() : "EMPRESA";
+                        tvAdminDashboardTitle.setText("Gestión: " + nombreEmpresa);
+                        btnAdminAccion1.setText("GESTIONAR MIS EMPLEADOS");
+                        btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
+                    } else {
+                        btnAdminSwitch.setText("MODO ADMIN");
+                        btnAdminSwitch.setBackgroundColor(Color.parseColor("#EA580C"));
+                        tvStatus.setText("Panel del Trabajador");
+                        groupTrabajador.setVisibility(View.VISIBLE);
+                        cardAdminDashboard.setVisibility(View.GONE);
+                    }
+                });
+            }
+        } else {
+            // MODO TRABAJADOR RASO
+            cardAdminDashboard.setVisibility(View.GONE);
+            groupTrabajador.setVisibility(View.VISIBLE);
+            btnAdminSwitch.setVisibility(View.GONE);
+            tvStatus.setText("Panel del Trabajador");
+        }
+    }
+
+    private void logout() {
+        sessionManager.clearSession();
+        View view = getView();
+        if (view != null) {
+            androidx.navigation.NavOptions navOptions = new androidx.navigation.NavOptions.Builder()
+                    .setPopUpTo(R.id.homeFragment, true)
+                    .build();
+            Navigation.findNavController(view).navigate(R.id.loginFragment, null, navOptions);
+        }
+    }
+
+    // =========================================================================
+    // 3. MAPAS Y GPS (Solo Entrada)
+    // =========================================================================
 
     private void actualizarMapa() {
         if (map == null || usuarioActual == null || usuarioActual.getEmpresa() == null) return;
@@ -287,33 +371,10 @@ public class HomeFragment extends Fragment {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Al dar permiso, registramos la Entrada
                 obtenerUbicacionYFichar();
                 actualizarMapa();
             }
-        }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (nfcAdapter != null) {
-            android.os.Bundle options = new android.os.Bundle();
-            options.putInt(android.nfc.NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250);
-            nfcAdapter.enableReaderMode(requireActivity(), nfcCallback,
-                    android.nfc.NfcAdapter.FLAG_READER_NFC_A |
-                            android.nfc.NfcAdapter.FLAG_READER_NFC_B |
-                            android.nfc.NfcAdapter.FLAG_READER_NFC_F |
-                            android.nfc.NfcAdapter.FLAG_READER_NFC_V |
-                            android.nfc.NfcAdapter.FLAG_READER_NFC_BARCODE,
-                    options);
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (nfcAdapter != null) {
-            nfcAdapter.disableReaderMode(requireActivity());
         }
     }
 
@@ -330,6 +391,25 @@ public class HomeFragment extends Fragment {
             } else {
                 Toast.makeText(getContext(), "Activa el GPS", Toast.LENGTH_SHORT).show();
             }
+        });
+    }
+
+    // =========================================================================
+    // 4. NFC Y LLAMADAS DE RED (API)
+    // =========================================================================
+
+    private void cargarPerfilEmpresa() {
+        String token = sessionManager.getToken();
+        RetrofitClient.getInstance().getMyApi().getPerfil(token).enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    usuarioActual = response.body();
+                    actualizarMapa();
+                }
+            }
+            @Override
+            public void onFailure(Call<User> call, Throwable t) { }
         });
     }
 
@@ -359,24 +439,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private final android.nfc.NfcAdapter.ReaderCallback nfcCallback = tag -> {
-        byte[] id = tag.getId();
-        String nfcUid = bytesToHex(id);
-
-        requireActivity().runOnUiThread(() -> {
-            Toast.makeText(getContext(), "¡Tarjeta NFC detectada! UID: " + nfcUid, Toast.LENGTH_SHORT).show();
-            procesarFichajeNFC(nfcUid);
-        });
-    };
-
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X", b));
-        }
-        return sb.toString();
-    }
-
     private void mostrarDialogoEmpresasParaIncidencias() {
         progressBar.setVisibility(View.VISIBLE);
         String token = sessionManager.getToken();
@@ -401,6 +463,50 @@ public class HomeFragment extends Fragment {
             @Override
             public void onFailure(Call<List<Empresa>> call, Throwable t) { progressBar.setVisibility(View.GONE); }
         });
+    }
+
+    private void mostrarDialogoEmpresasParaConfigurarMapa() {
+        progressBar.setVisibility(View.VISIBLE);
+        String token = sessionManager.getToken();
+        RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
+            @Override
+            public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Empresa> lista = response.body();
+                    String[] nombres = new String[lista.size()];
+                    for (int i = 0; i < lista.size(); i++) nombres[i] = lista.get(i).getNombre();
+
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Selecciona Empresa (Configurar Ubicación)")
+                            .setItems(nombres, (dialog, which) -> {
+                                Bundle bundle = new Bundle();
+                                bundle.putInt("empresa_id", lista.get(which).getIdEmpresa());
+                                Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_configMapaFragment, bundle);
+                            }).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Empresa>> call, Throwable t) { progressBar.setVisibility(View.GONE); }
+        });
+    }
+
+    private final android.nfc.NfcAdapter.ReaderCallback nfcCallback = tag -> {
+        byte[] id = tag.getId();
+        String nfcUid = bytesToHex(id);
+
+        requireActivity().runOnUiThread(() -> {
+            Toast.makeText(getContext(), "¡Tarjeta NFC detectada! UID: " + nfcUid, Toast.LENGTH_SHORT).show();
+            procesarFichajeNFC(nfcUid);
+        });
+    };
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
     }
 
     private void procesarFichajeNFC(String uidTarjeta) {
@@ -435,6 +541,38 @@ public class HomeFragment extends Fragment {
             public void onFailure(Call<com.example.controlpresencia.data.model.FichajeResponse> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(getContext(), "⚠️ Error de conexión", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void cargarEstadisticasAdmin(View view) {
+        TextView tvStatActivos = view.findViewById(R.id.tvAdminStatActivos);
+        TextView tvStatAusencias = view.findViewById(R.id.tvAdminStatAusencias);
+
+        String token = sessionManager.getToken();
+        if (token == null) return;
+
+        RetrofitClient.getInstance().getMyApi().getAdminStats(token).enqueue(new Callback<AdminStatsResponse>() {
+            @Override
+            public void onResponse(Call<AdminStatsResponse> call, Response<AdminStatsResponse> response) {
+                if (getView() == null) return;
+
+                if (response.isSuccessful() && response.body() != null) {
+                    // Inyectamos los números reales que vienen de Python
+                    tvStatActivos.setText(String.valueOf(response.body().getActivos()));
+                    tvStatAusencias.setText(String.valueOf(response.body().getAusencias()));
+                } else {
+                    tvStatActivos.setText("-");
+                    tvStatAusencias.setText("-");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AdminStatsResponse> call, Throwable t) {
+                if (getView() != null) {
+                    tvStatActivos.setText("X");
+                    tvStatAusencias.setText("X");
+                }
             }
         });
     }

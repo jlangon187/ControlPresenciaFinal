@@ -31,14 +31,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="16dp"
             android:ellipsize="end"
             android:maxLines="1"
             android:text="Visita Médica"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/cardEstado"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/ivIconoIncidencia"
             app:layout_constraintTop_toTopOf="@+id/ivIconoIncidencia" />
 
@@ -55,36 +55,11 @@
             app:layout_constraintStart_toEndOf="@+id/ivIconoIncidencia"
             app:layout_constraintTop_toBottomOf="@+id/tvAsuntoIncidencia" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardEstado"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:cardBackgroundColor="#FEF2F2"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="0dp"
-            app:layout_constraintBottom_toBottomOf="@+id/ivIconoIncidencia"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/ivIconoIncidencia">
-
-            <TextView
-                android:id="@+id/tvEstadoIncidencia"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="4dp"
-                android:text="PENDIENTE"
-                android:textColor="#EF4444"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-        </com.google.android.material.card.MaterialCardView>
-
         <TextView
             android:id="@+id/tvDescripcionIncidencia"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:ellipsize="end"
-            android:maxLines="2"
             android:text="Tengo que ir al médico especialista a las 10:30, adjuntaré el justificante cuando llegue."
             android:textColor="@color/text_secondary"
             android:textSize="13sp"

@@ -1,5 +1,8 @@
 package com.example.controlpresencia.data.network;
 
+import com.example.controlpresencia.data.model.AdminStatsResponse;
+import com.example.controlpresencia.data.model.ConfigUbicacionRequest;
+import com.example.controlpresencia.data.model.DiaHorario;
 import com.example.controlpresencia.data.model.Empresa;
 import com.example.controlpresencia.data.model.Fichaje;
 import com.example.controlpresencia.data.model.FichajeResponse;
@@ -65,9 +68,18 @@ public interface ApiService {
             @Body FichajeRequest request
     );
 
-    @GET("incidencias/empresa/{id}")
+    @GET("api/incidencias/empresa/{id}")
     Call<List<Incidencia>> getIncidenciasEmpresa(
             @Header("Authorization") String token,
             @Path("id") int idEmpresa
     );
+
+    @GET("api/horario/mi-horario")
+    Call<List<DiaHorario>> getMiHorario(@Header("Authorization") String token);
+
+    @GET("/api/admin/stats")
+    Call<AdminStatsResponse> getAdminStats(@Header("Authorization") String token);
+
+    @POST("/api/admin/configurar-ubicacion")
+    Call<FichajeResponse> configurarUbicacionEmpresa(@Header("Authorization") String token, @Body ConfigUbicacionRequest request);
 }

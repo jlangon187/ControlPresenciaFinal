@@ -39,6 +39,13 @@ public class AdminEmpleadosFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         cargarEmpleados();
+
+        // Lógica para el botón volver
+        View btnVolver = view.findViewById(R.id.btnVolverAdminEmpleados);
+        if (btnVolver != null) {
+            btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());
+        }
+
     }
 
     private void cargarEmpleados() {
