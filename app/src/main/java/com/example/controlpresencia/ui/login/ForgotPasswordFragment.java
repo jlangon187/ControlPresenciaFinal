@@ -52,7 +52,6 @@ public class ForgotPasswordFragment extends Fragment {
 
         ResetPasswordRequest request = new ResetPasswordRequest(email);
 
-        // Nota: Esta llamada NO necesita token porque el usuario aún no está logueado
         RetrofitClient.getInstance().getMyApi().solicitarResetPassword(request).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {

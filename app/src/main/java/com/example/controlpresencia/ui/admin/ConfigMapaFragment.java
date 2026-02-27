@@ -120,12 +120,10 @@ public class ConfigMapaFragment extends Fragment {
         cargarUbicacionActualDeEmpresa();
     }
 
-    // --- LÓGICA DE CARGA DE DATOS ---
     private void cargarUbicacionActualDeEmpresa() {
         String token = sessionManager.getToken();
 
         if (empresaIdSeleccionada != null) {
-            // 1. ES SUPERADMIN: Buscamos las coordenadas en la lista de empresas
             RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
                 @Override
                 public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
@@ -137,13 +135,12 @@ public class ConfigMapaFragment extends Fragment {
                             }
                         }
                     }
-                    buscarMiGPS(); // Si no la encuentra, al GPS
+                    buscarMiGPS();
                 }
                 @Override
                 public void onFailure(Call<List<Empresa>> call, Throwable t) { buscarMiGPS(); }
             });
         } else {
-            // 2. ES ADMIN NORMAL: Sacamos las coordenadas de su propio perfil
             RetrofitClient.getInstance().getMyApi().getPerfil(token).enqueue(new Callback<User>() {
                 @Override
                 public void onResponse(Call<User> call, Response<User> response) {
@@ -154,7 +151,7 @@ public class ConfigMapaFragment extends Fragment {
                             return;
                         }
                     }
-                    buscarMiGPS(); // Si no tiene coordenadas aún, al GPS
+                    buscarMiGPS();
                 }
                 @Override
                 public void onFailure(Call<User> call, Throwable t) { buscarMiGPS(); }
@@ -171,32 +168,27 @@ public class ConfigMapaFragment extends Fragment {
         GeoPoint puntoAntiguo = new GeoPoint(empresa.getLatitud(), empresa.getLongitud());
         int radioAntiguo = empresa.getRadio() != null ? empresa.getRadio() : 100;
 
-        // Poner un marcador en el punto central original
         Marker marker = new Marker(mapAdmin);
         marker.setPosition(puntoAntiguo);
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         marker.setTitle("Ubicación Actual Guardada");
         mapAdmin.getOverlays().add(marker);
 
-        // Dibujar círculo rojo usando los métodos que funcionan bien en osmdroid
         circuloActualRojo = new Polygon();
         circuloActualRojo.setPoints(Polygon.pointsAsCircle(puntoAntiguo, radioAntiguo));
-        circuloActualRojo.setFillColor(Color.argb(20, 255, 0, 0)); // Rojo muy sutil para que no tape
+        circuloActualRojo.setFillColor(Color.argb(20, 255, 0, 0));
         circuloActualRojo.setStrokeColor(Color.RED);
         circuloActualRojo.setStrokeWidth(4.0f);
         mapAdmin.getOverlays().add(circuloActualRojo);
 
-        // Asegurarnos de que el naranja siempre esté por encima del rojo
         mapAdmin.getOverlays().remove(circuloRadioNaranja);
         mapAdmin.getOverlays().add(circuloRadioNaranja);
 
-        // Centrar el mapa directamente ahí
         mapAdmin.getController().setCenter(puntoAntiguo);
 
-        // Ajustamos el slider al radio que tenían guardado
         sliderRadio.setValue((float) radioAntiguo);
 
-        mapAdmin.invalidate(); // Refrescar mapa
+        mapAdmin.invalidate();
     }
 
     private void buscarMiGPS() {

@@ -28,7 +28,7 @@ public class LoginViewModel extends ViewModel {
             @Override
             public void onSuccess(LoginResponse response) {
                 isLoading.setValue(false);
-                loginResponse.setValue(response); // <--- Guardamos respuesta completa
+                loginResponse.setValue(response);
             }
 
             @Override

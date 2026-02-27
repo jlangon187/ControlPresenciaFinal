@@ -17,7 +17,7 @@ public class LoginRepository {
     }
 
     public interface LoginCallback {
-        void onSuccess(LoginResponse response); // <--- CAMBIO CLAVE
+        void onSuccess(LoginResponse response);
         void onError(String message);
     }
 
@@ -28,7 +28,7 @@ public class LoginRepository {
             @Override
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    callback.onSuccess(response.body()); // <--- Pasamos todo el objeto
+                    callback.onSuccess(response.body());
                 } else {
                     callback.onError("Credenciales incorrectas");
                 }

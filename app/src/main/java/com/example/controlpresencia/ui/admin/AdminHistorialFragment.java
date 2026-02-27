@@ -95,7 +95,6 @@ public class AdminHistorialFragment extends Fragment {
     }
 
     private void actualizarListaYTotales(List<Fichaje> datosMostrar) {
-        // 1. Mostrar lista
         adapter = new AdminHistorialAdapter(datosMostrar, fichaje -> {
             if (fichaje.getLatitud() != null && fichaje.getLongitud() != null) {
                 Bundle bundle = new Bundle();
@@ -112,7 +111,6 @@ public class AdminHistorialFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
-        // 2. Calcular totales
         long totalMinutos = 0;
         double totalExtrasDec = 0.0;
 
@@ -147,7 +145,7 @@ public class AdminHistorialFragment extends Fragment {
         });
 
         datePicker.addOnNegativeButtonClickListener(v -> {
-            actualizarListaYTotales(listaCompleta); // Restaurar todo
+            actualizarListaYTotales(listaCompleta);
         });
 
         datePicker.show(getParentFragmentManager(), "FiltroFechasAdmin");

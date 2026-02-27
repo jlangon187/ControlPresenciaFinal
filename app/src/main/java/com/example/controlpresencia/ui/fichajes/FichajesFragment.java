@@ -51,7 +51,6 @@ public class FichajesFragment extends Fragment {
 
         view.findViewById(R.id.btnFiltrar).setOnClickListener(v -> mostrarCalendario());
 
-        // Lógica para el botón volver
         View btnVolver = view.findViewById(R.id.btnVolverFichajes);
         if (btnVolver != null) {
             btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());

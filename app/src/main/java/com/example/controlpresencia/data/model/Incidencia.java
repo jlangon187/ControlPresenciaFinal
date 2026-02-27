@@ -19,11 +19,9 @@ public class Incidencia {
     @SerializedName("estado")
     private String estado;
 
-    // Opcional: Para saber quién la envió
     @SerializedName("empleado_nombre")
     private String empleadoNombre;
 
-    // Constructor vacío requerido por Gson
     public Incidencia() {
     }
 

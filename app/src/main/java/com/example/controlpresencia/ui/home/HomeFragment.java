@@ -23,6 +23,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
+import com.example.controlpresencia.MainActivity;
 import com.example.controlpresencia.R;
 import com.example.controlpresencia.data.local.SessionManager;
 import com.example.controlpresencia.data.model.AdminStatsResponse;
@@ -64,7 +65,7 @@ public class HomeFragment extends Fragment {
     private Empresa empresaSeleccionadaSuperadmin = null;
 
     // =========================================================================
-    // 1. CICLO DE VIDA
+    // CICLO DE VIDA
     // =========================================================================
 
     @Override
@@ -136,6 +137,7 @@ public class HomeFragment extends Fragment {
         cargarPerfilEmpresa();
     }
 
+    // Metodo onResune para NFC
     @Override
     public void onResume() {
         super.onResume();
@@ -150,8 +152,29 @@ public class HomeFragment extends Fragment {
                             android.nfc.NfcAdapter.FLAG_READER_NFC_BARCODE,
                     options);
         }
+
+        android.content.Intent intent = requireActivity().getIntent();
+        if (intent != null && intent.getAction() != null) {
+            String action = intent.getAction();
+
+            if (android.nfc.NfcAdapter.ACTION_TAG_DISCOVERED.equals(action) ||
+                    android.nfc.NfcAdapter.ACTION_TECH_DISCOVERED.equals(action) ||
+                    android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
+
+                android.nfc.Tag tag = intent.getParcelableExtra(android.nfc.NfcAdapter.EXTRA_TAG);
+                if (tag != null) {
+                    String nfcUid = bytesToHex(tag.getId());
+
+                    Toast.makeText(getContext(), "Fichando...", Toast.LENGTH_SHORT).show();
+                    procesarFichajeNFC(nfcUid);
+
+                    intent.setAction(android.content.Intent.ACTION_MAIN);
+                }
+            }
+        }
     }
 
+    // Metodo onPause para NFC
     @Override
     public void onPause() {
         super.onPause();
@@ -161,7 +184,7 @@ public class HomeFragment extends Fragment {
     }
 
     // =========================================================================
-    // 2. CONFIGURACIÓN DE VISTAS (Lógica visual)
+    // CONFIGURACIÓN DE VISTAS
     // =========================================================================
 
     private void configurarBotones(View view, Button btnHistorial) {
@@ -178,7 +201,7 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // Botón Fichar Salida (SIN GPS, va directo)
+        // Botón Fichar Salida
         btnSalida.setOnClickListener(v -> {
             String token = sessionManager.getToken();
             if (token != null) {
@@ -241,7 +264,6 @@ public class HomeFragment extends Fragment {
                 // ==========================================
                 btnAdminSwitch.setVisibility(View.VISIBLE);
 
-                // --- ACCIONES DE LOS BOTONES (Comunes aunque se oculte el panel) ---
                 btnAdminAccion1.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment));
                 btnAdminAccion2.setOnClickListener(v -> {
                     if (usuarioActual != null && usuarioActual.getEmpresa() != null) {
@@ -252,7 +274,6 @@ public class HomeFragment extends Fragment {
                 });
                 btnAdminAccion3.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_configMapaFragment));
 
-                // --- APLICAR ESTADO GUARDADO AL CARGAR LA PANTALLA ---
                 if (isModoAdminActivo) {
                     btnAdminSwitch.setText("MODO TRABAJADOR");
                     btnAdminSwitch.setBackgroundColor(Color.parseColor("#3B82F6"));
@@ -277,7 +298,6 @@ public class HomeFragment extends Fragment {
                     cardAdminDashboard.setVisibility(View.GONE);
                 }
 
-                // --- ACCIÓN DEL INTERRUPTOR (Cuando el Admin lo pulsa manualmente) ---
                 btnAdminSwitch.setOnClickListener(v -> {
                     isModoAdminActivo = !isModoAdminActivo;
 
@@ -307,7 +327,6 @@ public class HomeFragment extends Fragment {
                 });
             }
         } else {
-            // MODO TRABAJADOR RASO
             cardAdminDashboard.setVisibility(View.GONE);
             groupTrabajador.setVisibility(View.VISIBLE);
             btnAdminSwitch.setVisibility(View.GONE);
@@ -327,7 +346,7 @@ public class HomeFragment extends Fragment {
     }
 
     // =========================================================================
-    // 3. MAPAS Y GPS (Solo Entrada)
+    // MAPAS Y GPS (Solo Entrada)
     // =========================================================================
 
     private void actualizarMapa() {
@@ -401,7 +420,7 @@ public class HomeFragment extends Fragment {
     }
 
     // =========================================================================
-    // 4. NFC Y LLAMADAS DE RED (API)
+    // NFC Y LLAMADAS DE RED (API)
     // =========================================================================
 
     private void cargarPerfilEmpresa() {
@@ -473,7 +492,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    // --- LÓGICA DE INTERFAZ DEL SUPERADMIN ---
     private void actualizarUiSuperadmin(View view) {
         TextView tvAdminDashboardTitle = view.findViewById(R.id.tvAdminDashboardTitle);
         MaterialButton btnAdminAccion1 = view.findViewById(R.id.btnAdminAccion1);
@@ -486,11 +504,9 @@ public class HomeFragment extends Fragment {
 
 
         if (empresaSeleccionadaSuperadmin == null) {
-            // AÚN NO HA SELECCIONADO EMPRESA
             tvAdminDashboardTitle.setText("Centro Global\n(Selecciona empresa arriba)");
             tvAdminDashboardTitle.setTextSize(16f); // Más pequeño para que quepa
 
-            // Si pulsan un botón sin haber elegido empresa, les avisamos
             View.OnClickListener alertaSeleccion = v ->
                     Toast.makeText(getContext(), "☝️ Selecciona una empresa en el botón verde primero", Toast.LENGTH_SHORT).show();
 
@@ -524,7 +540,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    // --- DIÁLOGO ÚNICO PARA SELECCIONAR EMPRESA ---
     private void mostrarDialogoSeleccionEmpresaGlobal(View mainView) {
         progressBar.setVisibility(View.VISIBLE);
         String token = sessionManager.getToken();
@@ -575,7 +590,6 @@ public class HomeFragment extends Fragment {
             empresaIdAEnviar = empresaSeleccionadaSuperadmin.getIdEmpresa();
         }
 
-        // Llamada a Retrofit con el nuevo parámetro
         RetrofitClient.getInstance().getMyApi().getAdminStats(token, empresaIdAEnviar).enqueue(new Callback<AdminStatsResponse>() {
             @Override
             public void onResponse(Call<AdminStatsResponse> call, Response<AdminStatsResponse> response) {

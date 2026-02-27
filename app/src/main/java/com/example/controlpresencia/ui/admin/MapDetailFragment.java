@@ -37,12 +37,10 @@ public class MapDetailFragment extends Fragment {
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
 
-        // Referencias a los textos de la tarjeta
         TextView tvNombre = view.findViewById(R.id.tvMapNombre);
         TextView tvFecha = view.findViewById(R.id.tvMapFecha);
         TextView tvHoras = view.findViewById(R.id.tvMapHoras);
 
-        // Lógica para el botón volver
         View btnVolver = view.findViewById(R.id.btnVolverMapa);
         if (btnVolver != null) {
             btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());
@@ -53,23 +51,19 @@ public class MapDetailFragment extends Fragment {
             double lng = getArguments().getDouble("lng");
             String nombre = getArguments().getString("nombre");
 
-            // Recoger los datos nuevos
             String fecha = getArguments().getString("fecha");
             String horaEntrada = getArguments().getString("hora_entrada");
             String horaSalida = getArguments().getString("hora_salida");
 
-            // Rellenar la tarjeta superior
             tvNombre.setText(nombre);
             tvFecha.setText("Fecha del Fichaje: " + (fecha != null ? fecha : "Desconocida"));
             tvHoras.setText("🟢 Entrada: " + (horaEntrada != null ? horaEntrada : "--:--") +
                     "   |   🔴 Salida: " + (horaSalida != null ? horaSalida : "--:--"));
 
-            // Configurar el mapa
             GeoPoint punto = new GeoPoint(lat, lng);
             map.getController().setZoom(18.0);
             map.getController().setCenter(punto);
 
-            // Marcador
             Marker marker = new Marker(map);
             marker.setPosition(punto);
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);

@@ -40,7 +40,6 @@ public class AdminHistorialAdapter extends RecyclerView.Adapter<AdminHistorialAd
         holder.tvHoraSalida.setText("🔴 " + item.getHoraSalidaFormateada());
         holder.tvTotalDia.setText(item.getTotalHoras());
 
-        // Al hacer clic, enviamos el evento
         holder.itemView.setOnClickListener(v -> listener.onFichajeClick(item));
     }
 

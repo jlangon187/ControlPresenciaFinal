@@ -22,8 +22,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            tools:ignore="ExtraText">
             android:launchMode="singleTop">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

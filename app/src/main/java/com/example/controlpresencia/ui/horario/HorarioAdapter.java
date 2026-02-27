@@ -36,7 +36,6 @@ public class HorarioAdapter extends RecyclerView.Adapter<HorarioAdapter.HorarioV
     public void onBindViewHolder(@NonNull HorarioViewHolder holder, int position) {
         DiaHorario dia = listaDias.get(position);
 
-        // Nombre del día y la inicial (Ej: "Lunes" -> "L")
         holder.tvNombreDia.setText(dia.getNombreDia());
         holder.tvInicialDia.setText(String.valueOf(dia.getNombreDia().charAt(0)).toUpperCase());
 
@@ -44,11 +43,9 @@ public class HorarioAdapter extends RecyclerView.Adapter<HorarioAdapter.HorarioV
             holder.tvHorasDia.setText("Sin turno");
             holder.tvEstadoTurno.setText("Libre");
 
-            // Colores modo Libre (Gris)
             holder.tvEstadoTurno.setTextColor(Color.parseColor("#64748B"));
             holder.cardEstadoTurno.setCardBackgroundColor(Color.parseColor("#F1F5F9"));
         } else {
-            // Recortar los segundos si vienen de la BBDD (Ej: "08:00:00" -> "08:00")
             String entrada = dia.getHoraEntrada() != null && dia.getHoraEntrada().length() >= 5 ? dia.getHoraEntrada().substring(0, 5) : "--:--";
             String salida = dia.getHoraSalida() != null && dia.getHoraSalida().length() >= 5 ? dia.getHoraSalida().substring(0, 5) : "--:--";
 

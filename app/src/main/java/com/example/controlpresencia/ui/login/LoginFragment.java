@@ -32,7 +32,6 @@ public class LoginFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflar el layout
         return inflater.inflate(R.layout.fragment_login, container, false);
     }
 
@@ -44,10 +43,9 @@ public class LoginFragment extends Fragment {
         if (sessionManager.getToken() != null) {
             NavController navController = Navigation.findNavController(view);
             navController.navigate(R.id.action_loginFragment_to_homeFragment);
-            return; // Detenemos la carga de esta pantalla
+            return;
         }
 
-        // 1. Inicializar vistas
         etEmail = view.findViewById(R.id.etEmail);
         etPassword = view.findViewById(R.id.etPassword);
         btnLogin = view.findViewById(R.id.btnLogin);
@@ -55,20 +53,16 @@ public class LoginFragment extends Fragment {
         tvForgotPassword = view.findViewById(R.id.tvForgotPassword);
 
 
-        // 2. Inicializar ViewModel
         viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
 
-        // 3. Configurar el botón
         btnLogin.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
             if (!email.isEmpty() && !password.isEmpty()) {
-                // 1. Mostrar que estamos cargando
                 progressBar.setVisibility(View.VISIBLE);
                 btnLogin.setEnabled(false);
 
-                // 2. Pedir el Token a Firebase
                 com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken()
                         .addOnCompleteListener(task -> {
                             String fcmToken = null;
@@ -79,7 +73,6 @@ public class LoginFragment extends Fragment {
                                 android.util.Log.e("LOGIN_FCM", "Error al obtener token Firebase", task.getException());
                             }
 
-                            // 3. Hacer el Login con el token
                             viewModel.login(email, password, fcmToken);
                         });
             } else {
@@ -92,7 +85,6 @@ public class LoginFragment extends Fragment {
             navController.navigate(R.id.action_loginFragment_to_forgotPasswordFragment);
         });
 
-// 4. Observar cambios (MVVM)
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), message -> {
             Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
         });

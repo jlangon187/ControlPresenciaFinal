@@ -26,7 +26,6 @@ public class SessionManager {
         editor.apply();
     }
 
-    // Método antiguo (por compatibilidad)
     public void saveToken(String token) {
         editor.putString(KEY_TOKEN, "Bearer " + token);
         editor.apply();
