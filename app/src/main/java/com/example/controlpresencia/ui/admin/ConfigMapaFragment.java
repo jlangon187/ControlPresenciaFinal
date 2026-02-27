@@ -142,15 +142,21 @@ public class ConfigMapaFragment extends Fragment {
                         marker.setTitle("Ubicación Actual Guardada");
                         mapAdmin.getOverlays().add(marker);
 
-                        // Dibujar círculo rojo
+                        // Dibujar círculo rojo (Ubicación actual guardada)
                         circuloActualRojo = new Polygon();
                         circuloActualRojo.setPoints(Polygon.pointsAsCircle(puntoAntiguo, radioAntiguo));
-                        circuloActualRojo.getFillPaint().setColor(Color.argb(40, 255, 0, 0)); // Rojo pálido
+                        circuloActualRojo.getFillPaint().setColor(Color.TRANSPARENT);
+
+                        // Y le ponemos un borde rojo grueso para marcar el límite
                         circuloActualRojo.getOutlinePaint().setColor(Color.RED);
-                        circuloActualRojo.getOutlinePaint().setStrokeWidth(2f);
+                        circuloActualRojo.getOutlinePaint().setStrokeWidth(4f);
                         mapAdmin.getOverlays().add(circuloActualRojo);
 
-                        // Centrar el mapa directamente ahí para facilitarle el trabajo al admin
+                        // Asegurarnos de que el naranja siempre esté por encima de la capa base
+                        mapAdmin.getOverlays().remove(circuloRadioNaranja);
+                        mapAdmin.getOverlays().add(circuloRadioNaranja);
+
+                        // Centrar el mapa directamente ahí
                         mapAdmin.getController().setCenter(puntoAntiguo);
 
                         // Ajustamos el slider al radio que tenían guardado
