@@ -95,9 +95,9 @@ public class ConfigMapaFragment extends Fragment {
         mapAdmin.getController().setCenter(new GeoPoint(40.416775, -3.703790)); // Por defecto
 
         circuloRadioNaranja = new Polygon();
-        circuloRadioNaranja.getFillPaint().setColor(Color.parseColor("#33EA580C")); // Naranja transparente
-        circuloRadioNaranja.getOutlinePaint().setColor(Color.parseColor("#EA580C"));
-        circuloRadioNaranja.getOutlinePaint().setStrokeWidth(3f);
+        circuloRadioNaranja.setFillColor(Color.parseColor("#33EA580C")); // Naranja transparente
+        circuloRadioNaranja.setStrokeColor(Color.parseColor("#EA580C"));
+        circuloRadioNaranja.setStrokeWidth(3.0f);
         mapAdmin.getOverlays().add(circuloRadioNaranja);
 
         actualizarCirculoNaranjaEnMapa();
@@ -120,60 +120,83 @@ public class ConfigMapaFragment extends Fragment {
         cargarUbicacionActualDeEmpresa();
     }
 
+    // --- LÓGICA DE CARGA DE DATOS ---
     private void cargarUbicacionActualDeEmpresa() {
         String token = sessionManager.getToken();
 
-        // Llamamos al mismo endpoint del perfil (o de empresas) para sacar los datos
-        RetrofitClient.getInstance().getMyApi().getPerfil(token).enqueue(new Callback<User>() {
-            @Override
-            public void onResponse(Call<User> call, Response<User> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Empresa empresa = response.body().getEmpresa();
-
-                    // Si la empresa ya tiene coordenadas guardadas, las dibujamos en ROJO
-                    if (empresa != null && empresa.getLatitud() != null && empresa.getLongitud() != null) {
-                        GeoPoint puntoAntiguo = new GeoPoint(empresa.getLatitud(), empresa.getLongitud());
-                        int radioAntiguo = empresa.getRadio() != null ? empresa.getRadio() : 100;
-
-                        // Poner un marcador
-                        Marker marker = new Marker(mapAdmin);
-                        marker.setPosition(puntoAntiguo);
-                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                        marker.setTitle("Ubicación Actual Guardada");
-                        mapAdmin.getOverlays().add(marker);
-
-                        // Dibujar círculo rojo (Ubicación actual guardada)
-                        circuloActualRojo = new Polygon();
-                        circuloActualRojo.setPoints(Polygon.pointsAsCircle(puntoAntiguo, radioAntiguo));
-                        circuloActualRojo.getFillPaint().setColor(Color.TRANSPARENT);
-
-                        // Y le ponemos un borde rojo grueso para marcar el límite
-                        circuloActualRojo.getOutlinePaint().setColor(Color.RED);
-                        circuloActualRojo.getOutlinePaint().setStrokeWidth(4f);
-                        mapAdmin.getOverlays().add(circuloActualRojo);
-
-                        // Asegurarnos de que el naranja siempre esté por encima de la capa base
-                        mapAdmin.getOverlays().remove(circuloRadioNaranja);
-                        mapAdmin.getOverlays().add(circuloRadioNaranja);
-
-                        // Centrar el mapa directamente ahí
-                        mapAdmin.getController().setCenter(puntoAntiguo);
-
-                        // Ajustamos el slider al radio que tenían guardado
-                        sliderRadio.setValue((float) radioAntiguo);
-
-                        mapAdmin.invalidate();
-                    } else {
-                        // Si no hay coordenadas guardadas (primera vez), buscamos su GPS
-                        buscarMiGPS();
+        if (empresaIdSeleccionada != null) {
+            // 1. ES SUPERADMIN: Buscamos las coordenadas en la lista de empresas
+            RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
+                @Override
+                public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        for (Empresa emp : response.body()) {
+                            if (emp.getIdEmpresa() == empresaIdSeleccionada) {
+                                dibujarZonaRoja(emp);
+                                return;
+                            }
+                        }
                     }
+                    buscarMiGPS(); // Si no la encuentra, al GPS
                 }
-            }
-            @Override
-            public void onFailure(Call<User> call, Throwable t) {
-                buscarMiGPS();
-            }
-        });
+                @Override
+                public void onFailure(Call<List<Empresa>> call, Throwable t) { buscarMiGPS(); }
+            });
+        } else {
+            // 2. ES ADMIN NORMAL: Sacamos las coordenadas de su propio perfil
+            RetrofitClient.getInstance().getMyApi().getPerfil(token).enqueue(new Callback<User>() {
+                @Override
+                public void onResponse(Call<User> call, Response<User> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        Empresa empresa = response.body().getEmpresa();
+                        if (empresa != null && empresa.getLatitud() != null) {
+                            dibujarZonaRoja(empresa);
+                            return;
+                        }
+                    }
+                    buscarMiGPS(); // Si no tiene coordenadas aún, al GPS
+                }
+                @Override
+                public void onFailure(Call<User> call, Throwable t) { buscarMiGPS(); }
+            });
+        }
+    }
+
+    private void dibujarZonaRoja(Empresa empresa) {
+        if (empresa.getLatitud() == null || empresa.getLongitud() == null) {
+            buscarMiGPS();
+            return;
+        }
+
+        GeoPoint puntoAntiguo = new GeoPoint(empresa.getLatitud(), empresa.getLongitud());
+        int radioAntiguo = empresa.getRadio() != null ? empresa.getRadio() : 100;
+
+        // Poner un marcador en el punto central original
+        Marker marker = new Marker(mapAdmin);
+        marker.setPosition(puntoAntiguo);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        marker.setTitle("Ubicación Actual Guardada");
+        mapAdmin.getOverlays().add(marker);
+
+        // Dibujar círculo rojo usando los métodos que funcionan bien en osmdroid
+        circuloActualRojo = new Polygon();
+        circuloActualRojo.setPoints(Polygon.pointsAsCircle(puntoAntiguo, radioAntiguo));
+        circuloActualRojo.setFillColor(Color.argb(20, 255, 0, 0)); // Rojo muy sutil para que no tape
+        circuloActualRojo.setStrokeColor(Color.RED);
+        circuloActualRojo.setStrokeWidth(4.0f);
+        mapAdmin.getOverlays().add(circuloActualRojo);
+
+        // Asegurarnos de que el naranja siempre esté por encima del rojo
+        mapAdmin.getOverlays().remove(circuloRadioNaranja);
+        mapAdmin.getOverlays().add(circuloRadioNaranja);
+
+        // Centrar el mapa directamente ahí
+        mapAdmin.getController().setCenter(puntoAntiguo);
+
+        // Ajustamos el slider al radio que tenían guardado
+        sliderRadio.setValue((float) radioAntiguo);
+
+        mapAdmin.invalidate(); // Refrescar mapa
     }
 
     private void buscarMiGPS() {

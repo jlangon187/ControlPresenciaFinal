@@ -19,7 +19,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="60dp"
         android:layout_marginEnd="16dp"
         android:text="Plantilla de Empleados"
         android:textColor="@color/white"
@@ -74,12 +74,14 @@
         android:id="@+id/rvAdminEmpleados"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="60dp"
         android:clipToPadding="false"
         android:paddingHorizontal="24dp"
         android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvSubtituloEmpleados"
+        app:layout_constraintVertical_bias="1.0"
+        tools:layout_editor_absoluteX="0dp"
         tools:listitem="@layout/item_empleado" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -78,7 +78,7 @@ public interface ApiService {
     Call<List<DiaHorario>> getMiHorario(@Header("Authorization") String token);
 
     @GET("/api/admin/stats")
-    Call<AdminStatsResponse> getAdminStats(@Header("Authorization") String token);
+    Call<AdminStatsResponse> getAdminStats(@Header("Authorization") String token, @Query("empresa_id") Integer empresaId);
 
     @POST("/api/admin/configurar-ubicacion")
     Call<FichajeResponse> configurarUbicacionEmpresa(@Header("Authorization") String token, @Body ConfigUbicacionRequest request);

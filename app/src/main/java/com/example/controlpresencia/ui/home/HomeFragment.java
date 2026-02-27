@@ -61,6 +61,7 @@ public class HomeFragment extends Fragment {
     private FusedLocationProviderClient fusedLocationClient;
     private static final int REQUEST_LOCATION_PERMISSION = 100;
     private android.nfc.NfcAdapter nfcAdapter;
+    private Empresa empresaSeleccionadaSuperadmin = null;
 
     // =========================================================================
     // 1. CICLO DE VIDA
@@ -219,26 +220,37 @@ public class HomeFragment extends Fragment {
 
         if (sessionManager.isAdmin()) {
             if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
-                // MODO SUPERADMINISTRADOR
+                // ==========================================
+                // MODO SUPERADMINISTRADOR (Dinámico)
+                // ==========================================
                 tvStatus.setText("Panel de Control Global");
                 groupTrabajador.setVisibility(View.GONE);
                 cardAdminDashboard.setVisibility(View.VISIBLE);
-                btnAdminSwitch.setVisibility(View.GONE);
 
-                cargarEstadisticasAdmin(view);
+                btnAdminSwitch.setVisibility(View.VISIBLE);
+                btnAdminSwitch.setText("SELECCIONAR EMPRESA");
+                btnAdminSwitch.setBackgroundColor(Color.parseColor("#10B981")); // Color Verde
 
-                tvAdminDashboardTitle.setText("Centro de Control Global");
-                btnAdminAccion1.setText("GESTIONAR EMPLEADOS");
-                btnAdminAccion2.setText("VER INCIDENCIAS");
-                btnAdminAccion3.setText("CONFIGURAR UBICACIÓN");
+                btnAdminSwitch.setOnClickListener(v -> mostrarDialogoSeleccionEmpresaGlobal(view));
 
-                btnAdminAccion1.setOnClickListener(v -> mostrarDialogoEmpresas());
-                btnAdminAccion2.setOnClickListener(v -> mostrarDialogoEmpresasParaIncidencias());
-                btnAdminAccion3.setOnClickListener(v -> mostrarDialogoEmpresasParaConfigurarMapa());
+                actualizarUiSuperadmin(view);
 
             } else {
-                // MODO ADMINISTRADOR (Con Memoria)
+                // ==========================================
+                // MODO ADMINISTRADOR (EMPRESA ESPECÍFICA)
+                // ==========================================
                 btnAdminSwitch.setVisibility(View.VISIBLE);
+
+                // --- ACCIONES DE LOS BOTONES (Comunes aunque se oculte el panel) ---
+                btnAdminAccion1.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment));
+                btnAdminAccion2.setOnClickListener(v -> {
+                    if (usuarioActual != null && usuarioActual.getEmpresa() != null) {
+                        Bundle bundle = new Bundle();
+                        bundle.putInt("empresa_id", usuarioActual.getEmpresa().getIdEmpresa());
+                        Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminIncidenciasFragment, bundle);
+                    }
+                });
+                btnAdminAccion3.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_configMapaFragment));
 
                 // --- APLICAR ESTADO GUARDADO AL CARGAR LA PANTALLA ---
                 if (isModoAdminActivo) {
@@ -252,9 +264,11 @@ public class HomeFragment extends Fragment {
 
                     String nombreEmpresa = (usuarioActual != null && usuarioActual.getEmpresa() != null)
                             ? usuarioActual.getEmpresa().getNombre().toUpperCase() : "EMPRESA";
-                    tvAdminDashboardTitle.setText("Gestión: " + nombreEmpresa);
+                    tvAdminDashboardTitle.setText("Empresa:\n" + nombreEmpresa);
+
                     btnAdminAccion1.setText("GESTIONAR MIS EMPLEADOS");
                     btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
+                    btnAdminAccion3.setText("CONFIGURAR UBICACIÓN"); // NUEVO
                 } else {
                     btnAdminSwitch.setText("MODO ADMIN");
                     btnAdminSwitch.setBackgroundColor(Color.parseColor("#EA580C"));
@@ -263,17 +277,7 @@ public class HomeFragment extends Fragment {
                     cardAdminDashboard.setVisibility(View.GONE);
                 }
 
-                // --- ACCIONES DE LOS BOTONES ---
-                btnAdminAccion1.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment));
-                btnAdminAccion2.setOnClickListener(v -> {
-                    if (usuarioActual != null && usuarioActual.getEmpresa() != null) {
-                        Bundle bundle = new Bundle();
-                        bundle.putInt("empresa_id", usuarioActual.getEmpresa().getIdEmpresa());
-                        Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminIncidenciasFragment, bundle);
-                    }
-                });
-
-                // --- ACCIÓN DEL INTERRUPTOR ---
+                // --- ACCIÓN DEL INTERRUPTOR (Cuando el Admin lo pulsa manualmente) ---
                 btnAdminSwitch.setOnClickListener(v -> {
                     isModoAdminActivo = !isModoAdminActivo;
 
@@ -288,9 +292,11 @@ public class HomeFragment extends Fragment {
 
                         String nombreEmpresa = (usuarioActual != null && usuarioActual.getEmpresa() != null)
                                 ? usuarioActual.getEmpresa().getNombre().toUpperCase() : "EMPRESA";
-                        tvAdminDashboardTitle.setText("Gestión: " + nombreEmpresa);
+                        tvAdminDashboardTitle.setText("Empresa:\n" + nombreEmpresa);
+
                         btnAdminAccion1.setText("GESTIONAR MIS EMPLEADOS");
                         btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
+                        btnAdminAccion3.setText("CONFIGURAR UBICACIÓN"); // NUEVO
                     } else {
                         btnAdminSwitch.setText("MODO ADMIN");
                         btnAdminSwitch.setBackgroundColor(Color.parseColor("#EA580C"));
@@ -413,84 +419,6 @@ public class HomeFragment extends Fragment {
         });
     }
 
-    private void mostrarDialogoEmpresas() {
-        progressBar.setVisibility(View.VISIBLE);
-        String token = sessionManager.getToken();
-        RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
-            @Override
-            public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
-                progressBar.setVisibility(View.GONE);
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Empresa> lista = response.body();
-                    String[] nombres = new String[lista.size()];
-                    for (int i = 0; i < lista.size(); i++) nombres[i] = lista.get(i).getNombre();
-
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle("Selecciona Empresa a Gestionar")
-                            .setItems(nombres, (dialog, which) -> {
-                                Bundle bundle = new Bundle();
-                                bundle.putInt("empresa_id", lista.get(which).getIdEmpresa());
-                                Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment, bundle);
-                            }).show();
-                }
-            }
-            @Override
-            public void onFailure(Call<List<Empresa>> call, Throwable t) { progressBar.setVisibility(View.GONE); }
-        });
-    }
-
-    private void mostrarDialogoEmpresasParaIncidencias() {
-        progressBar.setVisibility(View.VISIBLE);
-        String token = sessionManager.getToken();
-        RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
-            @Override
-            public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
-                progressBar.setVisibility(View.GONE);
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Empresa> lista = response.body();
-                    String[] nombres = new String[lista.size()];
-                    for (int i = 0; i < lista.size(); i++) nombres[i] = lista.get(i).getNombre();
-
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle("Selecciona Empresa (Incidencias)")
-                            .setItems(nombres, (dialog, which) -> {
-                                Bundle bundle = new Bundle();
-                                bundle.putInt("empresa_id", lista.get(which).getIdEmpresa());
-                                Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_adminIncidenciasFragment, bundle);
-                            }).show();
-                }
-            }
-            @Override
-            public void onFailure(Call<List<Empresa>> call, Throwable t) { progressBar.setVisibility(View.GONE); }
-        });
-    }
-
-    private void mostrarDialogoEmpresasParaConfigurarMapa() {
-        progressBar.setVisibility(View.VISIBLE);
-        String token = sessionManager.getToken();
-        RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
-            @Override
-            public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
-                progressBar.setVisibility(View.GONE);
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Empresa> lista = response.body();
-                    String[] nombres = new String[lista.size()];
-                    for (int i = 0; i < lista.size(); i++) nombres[i] = lista.get(i).getNombre();
-
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle("Selecciona Empresa (Configurar Ubicación)")
-                            .setItems(nombres, (dialog, which) -> {
-                                Bundle bundle = new Bundle();
-                                bundle.putInt("empresa_id", lista.get(which).getIdEmpresa());
-                                Navigation.findNavController(getView()).navigate(R.id.action_homeFragment_to_configMapaFragment, bundle);
-                            }).show();
-                }
-            }
-            @Override
-            public void onFailure(Call<List<Empresa>> call, Throwable t) { progressBar.setVisibility(View.GONE); }
-        });
-    }
-
     private final android.nfc.NfcAdapter.ReaderCallback nfcCallback = tag -> {
         byte[] id = tag.getId();
         String nfcUid = bytesToHex(id);
@@ -545,6 +473,91 @@ public class HomeFragment extends Fragment {
         });
     }
 
+    // --- LÓGICA DE INTERFAZ DEL SUPERADMIN ---
+    private void actualizarUiSuperadmin(View view) {
+        TextView tvAdminDashboardTitle = view.findViewById(R.id.tvAdminDashboardTitle);
+        MaterialButton btnAdminAccion1 = view.findViewById(R.id.btnAdminAccion1);
+        MaterialButton btnAdminAccion2 = view.findViewById(R.id.btnAdminAccion2);
+        MaterialButton btnAdminAccion3 = view.findViewById(R.id.btnAdminUbicacion);
+
+        btnAdminAccion1.setText("GESTIONAR MIS EMPLEADOS");
+        btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
+        btnAdminAccion3.setText("CONFIGURAR UBICACIÓN");
+
+
+        if (empresaSeleccionadaSuperadmin == null) {
+            // AÚN NO HA SELECCIONADO EMPRESA
+            tvAdminDashboardTitle.setText("Centro Global\n(Selecciona empresa arriba)");
+            tvAdminDashboardTitle.setTextSize(16f); // Más pequeño para que quepa
+
+            // Si pulsan un botón sin haber elegido empresa, les avisamos
+            View.OnClickListener alertaSeleccion = v ->
+                    Toast.makeText(getContext(), "☝️ Selecciona una empresa en el botón verde primero", Toast.LENGTH_SHORT).show();
+
+            btnAdminAccion1.setOnClickListener(alertaSeleccion);
+            btnAdminAccion2.setOnClickListener(alertaSeleccion);
+            btnAdminAccion3.setOnClickListener(alertaSeleccion);
+
+        } else {
+            tvAdminDashboardTitle.setText("Empresa:\n" + empresaSeleccionadaSuperadmin.getNombre().toUpperCase());
+            tvAdminDashboardTitle.setTextSize(18f);
+
+            btnAdminAccion1.setOnClickListener(v -> {
+                Bundle bundle = new Bundle();
+                bundle.putInt("empresa_id", empresaSeleccionadaSuperadmin.getIdEmpresa());
+                Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment, bundle);
+            });
+
+            btnAdminAccion2.setOnClickListener(v -> {
+                Bundle bundle = new Bundle();
+                bundle.putInt("empresa_id", empresaSeleccionadaSuperadmin.getIdEmpresa());
+                Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminIncidenciasFragment, bundle);
+            });
+
+            btnAdminAccion3.setOnClickListener(v -> {
+                Bundle bundle = new Bundle();
+                bundle.putInt("empresa_id", empresaSeleccionadaSuperadmin.getIdEmpresa());
+                Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_configMapaFragment, bundle);
+            });
+
+            cargarEstadisticasAdmin(view);
+        }
+    }
+
+    // --- DIÁLOGO ÚNICO PARA SELECCIONAR EMPRESA ---
+    private void mostrarDialogoSeleccionEmpresaGlobal(View mainView) {
+        progressBar.setVisibility(View.VISIBLE);
+        String token = sessionManager.getToken();
+
+        RetrofitClient.getInstance().getMyApi().getEmpresasAdmin(token).enqueue(new Callback<List<Empresa>>() {
+            @Override
+            public void onResponse(Call<List<Empresa>> call, Response<List<Empresa>> response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Empresa> lista = response.body();
+                    String[] nombres = new String[lista.size()];
+                    for (int i = 0; i < lista.size(); i++) nombres[i] = lista.get(i).getNombre();
+
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Trabajar con la empresa:")
+                            .setItems(nombres, (dialog, which) -> {
+                                empresaSeleccionadaSuperadmin = lista.get(which);
+
+                                actualizarUiSuperadmin(mainView);
+                            }).show();
+                } else {
+                    Toast.makeText(getContext(), "Error al cargar lista de empresas", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Empresa>> call, Throwable t) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(getContext(), "Error de red", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void cargarEstadisticasAdmin(View view) {
         TextView tvStatActivos = view.findViewById(R.id.tvAdminStatActivos);
         TextView tvStatAusencias = view.findViewById(R.id.tvAdminStatAusencias);
@@ -552,13 +565,23 @@ public class HomeFragment extends Fragment {
         String token = sessionManager.getToken();
         if (token == null) return;
 
-        RetrofitClient.getInstance().getMyApi().getAdminStats(token).enqueue(new Callback<AdminStatsResponse>() {
+        Integer empresaIdAEnviar = null;
+        if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
+            if (empresaSeleccionadaSuperadmin == null) {
+                tvStatActivos.setText("-");
+                tvStatAusencias.setText("-");
+                return;
+            }
+            empresaIdAEnviar = empresaSeleccionadaSuperadmin.getIdEmpresa();
+        }
+
+        // Llamada a Retrofit con el nuevo parámetro
+        RetrofitClient.getInstance().getMyApi().getAdminStats(token, empresaIdAEnviar).enqueue(new Callback<AdminStatsResponse>() {
             @Override
             public void onResponse(Call<AdminStatsResponse> call, Response<AdminStatsResponse> response) {
                 if (getView() == null) return;
 
                 if (response.isSuccessful() && response.body() != null) {
-                    // Inyectamos los números reales que vienen de Python
                     tvStatActivos.setText(String.valueOf(response.body().getActivos()));
                     tvStatAusencias.setText(String.valueOf(response.body().getAusencias()));
                 } else {
