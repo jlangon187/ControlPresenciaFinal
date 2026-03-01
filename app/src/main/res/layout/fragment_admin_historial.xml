@@ -12,23 +12,6 @@
         android:background="@color/header_bg"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tvTituloHistorialAdmin"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="60dp"
-        android:layout_marginEnd="8dp"
-        android:maxLines="2"
-        android:ellipsize="end"
-        android:text="Historial de\nEmpleado"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/btnAdminFiltrar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnVolverAdminHistorial"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -61,6 +44,35 @@
         app:layout_constraintBottom_toBottomOf="@+id/btnVolverAdminHistorial"
         app:layout_constraintEnd_toStartOf="@+id/btnVolverAdminHistorial"
         app:layout_constraintTop_toTopOf="@+id/btnVolverAdminHistorial" />
+
+    <TextView
+        android:id="@+id/tvTituloFijo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:text="Historial de"
+        android:textColor="#E2E8F0"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btnVolverAdminHistorial"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnVolverAdminHistorial" />
+
+    <TextView
+        android:id="@+id/tvTituloHistorialAdmin"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="24dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:text="Nombre del Empleado"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnVolverAdminHistorial" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardAdminResumen"

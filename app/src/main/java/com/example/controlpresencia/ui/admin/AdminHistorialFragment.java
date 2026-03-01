@@ -59,7 +59,7 @@ public class AdminHistorialFragment extends Fragment {
         if (getArguments() != null) {
             idTrabajador = getArguments().getInt("id_trabajador");
             nombreTrabajador = getArguments().getString("nombre_trabajador");
-            tvTitulo.setText("Historial de\n" + nombreTrabajador);
+            tvTitulo.setText(nombreTrabajador);
         }
 
         // Lógica para el botón volver
