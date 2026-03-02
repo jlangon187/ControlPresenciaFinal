@@ -112,8 +112,10 @@ public class HomeFragment extends Fragment {
 
         // Configurar Mapa (OSMDroid)
         map.setTileSource(TileSourceFactory.MAPNIK);
-        map.setMultiTouchControls(true);
         map.getController().setZoom(18.0);
+        map.setBuiltInZoomControls(false);
+        map.setMultiTouchControls(false);
+        map.setOnTouchListener((v, event) -> true);
 
         // Saludo usando el nombre guardado en sesión
         TextView tvWelcome = view.findViewById(R.id.tvWelcome);

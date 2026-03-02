@@ -171,6 +171,8 @@ public class AdminHistorialFragment extends Fragment {
         List<Fichaje> listaFiltrada = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+
         for (Fichaje f : listaCompleta) {
             try {
                 Date dateFichaje = sdf.parse(f.getFecha());
