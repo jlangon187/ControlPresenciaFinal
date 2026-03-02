@@ -47,18 +47,20 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Esta pantalla es para que el administrador configure dónde está la oficina y el radio permitido para fichar.
 public class ConfigMapaFragment extends Fragment {
 
     private MapView mapAdmin;
     private Slider sliderRadio;
     private TextView tvMetrosActuales;
     private SessionManager sessionManager;
-    private Polygon circuloRadioNaranja;
-    private Polygon circuloActualRojo;
+    private Polygon circuloRadioNaranja; // El círculo que se mueve con el mapa (nueva ubicación).
+    private Polygon circuloActualRojo;   // El círculo que indica la ubicación que ya está guardada.
     private GpsMyLocationProvider gpsProvider;
 
     private Integer empresaIdSeleccionada = null;
 
+    // Lanzador para pedir permisos de ubicación si no los tenemos.
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
@@ -69,7 +71,8 @@ public class ConfigMapaFragment extends Fragment {
             });
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle saved) {
+        // Carga la configuración del mapa.
         Configuration.getInstance().load(requireContext(), androidx.preference.PreferenceManager.getDefaultSharedPreferences(requireContext()));
         return inflater.inflate(R.layout.fragment_config_mapa, container, false);
     }
@@ -80,6 +83,7 @@ public class ConfigMapaFragment extends Fragment {
 
         sessionManager = new SessionManager(requireContext());
 
+        // Miramos si nos han pasado una empresa específica para configurar.
         if (getArguments() != null && getArguments().containsKey("empresa_id")) {
             empresaIdSeleccionada = getArguments().getInt("empresa_id");
         }
@@ -90,18 +94,21 @@ public class ConfigMapaFragment extends Fragment {
         MaterialButton btnVolver = view.findViewById(R.id.btnVolverMapa);
         MaterialButton btnGuardar = view.findViewById(R.id.btnGuardarUbicacion);
 
+        // Configuración inicial del mapa.
         mapAdmin.setMultiTouchControls(true);
         mapAdmin.getController().setZoom(18.0);
-        mapAdmin.getController().setCenter(new GeoPoint(40.416775, -3.703790)); // Por defecto
+        mapAdmin.getController().setCenter(new GeoPoint(40.416775, -3.703790)); // Centramos en Madrid por si acaso.
 
+        // Creamos el círculo naranja que servirá para elegir la nueva zona.
         circuloRadioNaranja = new Polygon();
-        circuloRadioNaranja.setFillColor(Color.parseColor("#33EA580C")); // Naranja transparente
+        circuloRadioNaranja.setFillColor(Color.parseColor("#33EA580C")); // Naranja clarito.
         circuloRadioNaranja.setStrokeColor(Color.parseColor("#EA580C"));
         circuloRadioNaranja.setStrokeWidth(3.0f);
         mapAdmin.getOverlays().add(circuloRadioNaranja);
 
         actualizarCirculoNaranjaEnMapa();
 
+        // Escuchamos cuando el usuario mueve el mapa para centrar el círculo naranja.
         mapAdmin.addMapListener(new MapListener() {
             @Override
             public boolean onScroll(ScrollEvent event) { actualizarCirculoNaranjaEnMapa(); return false; }
@@ -109,6 +116,7 @@ public class ConfigMapaFragment extends Fragment {
             public boolean onZoom(ZoomEvent event) { actualizarCirculoNaranjaEnMapa(); return false; }
         });
 
+        // Actualizamos el tamaño del círculo cuando se mueve el slider del radio.
         sliderRadio.addOnChangeListener((slider, value, fromUser) -> {
             tvMetrosActuales.setText((int) value + "m");
             actualizarCirculoNaranjaEnMapa();
@@ -117,9 +125,11 @@ public class ConfigMapaFragment extends Fragment {
         btnVolver.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         btnGuardar.setOnClickListener(v -> guardarNuevaUbicacion());
 
+        // Al entrar, intentamos cargar la ubicación que ya tiene la empresa en la base de datos.
         cargarUbicacionActualDeEmpresa();
     }
 
+    // Trae de la API la ubicación actual para enseñarla en el mapa.
     private void cargarUbicacionActualDeEmpresa() {
         String token = sessionManager.getToken();
 
@@ -141,6 +151,7 @@ public class ConfigMapaFragment extends Fragment {
                 public void onFailure(Call<List<Empresa>> call, Throwable t) { buscarMiGPS(); }
             });
         } else {
+            // Si no hay ID de empresa, tiramos del perfil del usuario logueado.
             RetrofitClient.getInstance().getMyApi().getPerfil(token).enqueue(new Callback<User>() {
                 @Override
                 public void onResponse(Call<User> call, Response<User> response) {
@@ -159,6 +170,7 @@ public class ConfigMapaFragment extends Fragment {
         }
     }
 
+    // Pinta un círculo rojo donde está la oficina actualmente según la base de datos.
     private void dibujarZonaRoja(Empresa empresa) {
         if (empresa.getLatitud() == null || empresa.getLongitud() == null) {
             buscarMiGPS();
@@ -181,16 +193,17 @@ public class ConfigMapaFragment extends Fragment {
         circuloActualRojo.setStrokeWidth(4.0f);
         mapAdmin.getOverlays().add(circuloActualRojo);
 
+        // Nos aseguramos de que el círculo naranja (el nuevo) quede por encima.
         mapAdmin.getOverlays().remove(circuloRadioNaranja);
         mapAdmin.getOverlays().add(circuloRadioNaranja);
 
         mapAdmin.getController().setCenter(puntoAntiguo);
-
         sliderRadio.setValue((float) radioAntiguo);
 
         mapAdmin.invalidate();
     }
 
+    // Si no hay ubicación guardada, intentamos usar el GPS del móvil para centrar el mapa.
     private void buscarMiGPS() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             centrarMapaEnMiUbicacion();
@@ -199,6 +212,7 @@ public class ConfigMapaFragment extends Fragment {
         }
     }
 
+    // Usa el proveedor de GPS para mover el mapa a la posición del administrador.
     private void centrarMapaEnMiUbicacion() {
         Toast.makeText(getContext(), "Buscando tu ubicación...", Toast.LENGTH_SHORT).show();
         gpsProvider = new GpsMyLocationProvider(requireContext());
@@ -219,6 +233,7 @@ public class ConfigMapaFragment extends Fragment {
         });
     }
 
+    // Dibuja el círculo naranja siempre en el centro de la pantalla del mapa.
     private void actualizarCirculoNaranjaEnMapa() {
         if (mapAdmin == null || circuloRadioNaranja == null) return;
         GeoPoint centroActual = (GeoPoint) mapAdmin.getMapCenter();
@@ -227,6 +242,7 @@ public class ConfigMapaFragment extends Fragment {
         mapAdmin.invalidate();
     }
 
+    // Mandamos al servidor las nuevas coordenadas y el radio que ha elegido el administrador.
     private void guardarNuevaUbicacion() {
         GeoPoint centro = (GeoPoint) mapAdmin.getMapCenter();
         double radio = sliderRadio.getValue();

@@ -28,6 +28,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Pantalla para que el administrador vea todos los fichajes de un trabajador específico.
 public class AdminHistorialFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -41,6 +42,7 @@ public class AdminHistorialFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle saved) {
+        // Inflamos el diseño del historial para el administrador.
         return inflater.inflate(R.layout.fragment_admin_historial, container, false);
     }
 
@@ -56,24 +58,27 @@ public class AdminHistorialFragment extends Fragment {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // Pillamos el ID y el nombre del trabajador que nos han pasado desde la lista anterior.
         if (getArguments() != null) {
             idTrabajador = getArguments().getInt("id_trabajador");
             nombreTrabajador = getArguments().getString("nombre_trabajador");
             tvTitulo.setText(nombreTrabajador);
         }
 
-        // Lógica para el botón volver
+        // Botón para volver atrás.
         View btnVolver = view.findViewById(R.id.btnVolverAdminHistorial);
         if (btnVolver != null) {
             btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());
         }
 
-        // Lógica para el botón filtrar
+        // Al darle a filtrar, abrimos el calendario para elegir fechas.
         view.findViewById(R.id.btnAdminFiltrar).setOnClickListener(v -> mostrarCalendario());
 
+        // Cargamos los datos del servidor.
         cargarHistorial();
     }
 
+    // Pide al servidor todos los fichajes del trabajador seleccionado.
     private void cargarHistorial() {
         String token = sessionManager.getToken();
         RetrofitClient.getInstance().getMyApi().getHistorialAdmin(token, idTrabajador).enqueue(new Callback<List<Fichaje>>() {
@@ -94,8 +99,10 @@ public class AdminHistorialFragment extends Fragment {
         });
     }
 
+    // Actualiza el RecyclerView y los contadores de horas totales y extras.
     private void actualizarListaYTotales(List<Fichaje> datosMostrar) {
         adapter = new AdminHistorialAdapter(datosMostrar, fichaje -> {
+            // Si el fichaje tiene GPS, al pulsar vamos al mapa para ver dónde fue.
             if (fichaje.getLatitud() != null && fichaje.getLongitud() != null) {
                 Bundle bundle = new Bundle();
                 bundle.putDouble("lat", fichaje.getLatitud());
@@ -111,6 +118,7 @@ public class AdminHistorialFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
+        // Sumamos todas las horas y minutos de los fichajes que se están viendo.
         long totalMinutos = 0;
         double totalExtrasDec = 0.0;
 
@@ -119,10 +127,12 @@ public class AdminHistorialFragment extends Fragment {
             totalExtrasDec += f.getHorasExtra();
         }
 
+        // Formateamos y mostramos el total trabajado.
         long horas = TimeUnit.MINUTES.toHours(totalMinutos);
         long minutos = totalMinutos % 60;
         tvTrabajado.setText(horas + "h " + minutos + "m");
 
+        // Calculamos y mostramos el total de horas extra.
         long extraMinutosTotales = Math.round(totalExtrasDec * 60);
         long hExtra = extraMinutosTotales / 60;
         long mExtra = extraMinutosTotales % 60;
@@ -134,6 +144,7 @@ public class AdminHistorialFragment extends Fragment {
         }
     }
 
+    // Abre el selector de rango de fechas de Material Design.
     private void mostrarCalendario() {
         MaterialDatePicker<Pair<Long, Long>> datePicker = MaterialDatePicker.Builder.dateRangePicker()
                 .setTitleText("Selecciona el periodo")
@@ -141,16 +152,19 @@ public class AdminHistorialFragment extends Fragment {
                 .build();
 
         datePicker.addOnPositiveButtonClickListener(selection -> {
+            // Cuando el usuario elige fechas, filtramos la lista.
             filtrarPorRango(selection.first, selection.second);
         });
 
         datePicker.addOnNegativeButtonClickListener(v -> {
+            // Si cancela, volvemos a mostrar la lista completa.
             actualizarListaYTotales(listaCompleta);
         });
 
         datePicker.show(getParentFragmentManager(), "FiltroFechasAdmin");
     }
 
+    // Filtra los fichajes de la lista según el rango de fechas seleccionado.
     private void filtrarPorRango(Long fechaInicio, Long fechaFin) {
         if (fechaInicio == null || fechaFin == null) return;
 
@@ -161,6 +175,7 @@ public class AdminHistorialFragment extends Fragment {
             try {
                 Date dateFichaje = sdf.parse(f.getFecha());
                 long timeFichaje = dateFichaje.getTime();
+                // Miramos si la fecha del fichaje cae dentro del rango.
                 if (timeFichaje >= fechaInicio && timeFichaje <= fechaFin) {
                     listaFiltrada.add(f);
                 }

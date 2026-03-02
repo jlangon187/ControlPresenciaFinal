@@ -20,6 +20,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Pantalla donde el administrador puede ver la lista de todos los empleados.
 public class AdminEmpleadosFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -27,6 +28,7 @@ public class AdminEmpleadosFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle saved) {
+        // Ponemos el diseño de la pantalla de lista de empleados para el admin.
         return inflater.inflate(R.layout.fragment_admin_empleados, container, false);
     }
 
@@ -36,11 +38,13 @@ public class AdminEmpleadosFragment extends Fragment {
 
         sessionManager = new SessionManager(requireContext());
         recyclerView = view.findViewById(R.id.rvAdminEmpleados);
+        // Configuramos la lista para que sea vertical.
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // Pedimos la lista al servidor nada más abrir la pantalla.
         cargarEmpleados();
 
-        // Lógica para el botón volver
+        // Configuración del botón para ir hacia atrás.
         View btnVolver = view.findViewById(R.id.btnVolverAdminEmpleados);
         if (btnVolver != null) {
             btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());
@@ -48,9 +52,11 @@ public class AdminEmpleadosFragment extends Fragment {
 
     }
 
+    // Llama a la API para pillar todos los empleados, filtrando por empresa si hace falta.
     private void cargarEmpleados() {
         String token = sessionManager.getToken();
 
+        // Miramos si nos han pasado un filtro de empresa por los argumentos.
         Integer empresaId = null;
         if (getArguments() != null && getArguments().containsKey("empresa_id")) {
             empresaId = getArguments().getInt("empresa_id");
@@ -60,8 +66,9 @@ public class AdminEmpleadosFragment extends Fragment {
             @Override
             public void onResponse(Call<List<User>> call, Response<List<User>> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    // Si el servidor nos da la lista, creamos el adaptador para mostrarla.
                     AdminEmpleadosAdapter adapter = new AdminEmpleadosAdapter(response.body(), empleado -> {
-                        // Navegar al historial pasando el ID
+                        // Al pulsar en un empleado, navegamos a su historial de fichajes.
                         Bundle bundle = new Bundle();
                         bundle.putInt("id_trabajador", empleado.getIdTrabajador());
                         bundle.putString("nombre_trabajador", empleado.getNombreCompleto());
@@ -69,12 +76,14 @@ public class AdminEmpleadosFragment extends Fragment {
                     });
                     recyclerView.setAdapter(adapter);
                 } else {
+                    // Si falla la petición.
                     Toast.makeText(getContext(), "Error: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<List<User>> call, Throwable t) {
+                // Si hay un error de red (no hay internet, servidor caído...).
                 Toast.makeText(getContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
             }
         });

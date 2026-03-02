@@ -23,6 +23,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Pantalla para que un trabajador envíe una incidencia (queja, aviso de retraso, etc.) a la empresa.
 public class IncidenciaFragment extends Fragment {
 
     private EditText etTitulo, etDescripcion;
@@ -32,6 +33,7 @@ public class IncidenciaFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle saved) {
+        // Inflamos el diseño de la pantalla de nueva incidencia.
         return inflater.inflate(R.layout.fragment_incidencia, container, false);
     }
 
@@ -45,18 +47,23 @@ public class IncidenciaFragment extends Fragment {
         etDescripcion = view.findViewById(R.id.etDescripcionIncidencia);
         btnEnviar = view.findViewById(R.id.btnEnviarIncidencia);
         progressBar = view.findViewById(R.id.progressBarIncidencia);
+
+        // Al pulsar enviar, se manda la información al servidor.
         btnEnviar.setOnClickListener(v -> enviarIncidencia());
 
+        // Botón para volver atrás.
         View btnVolver = view.findViewById(R.id.btnVolverIncidencia);
         if (btnVolver != null) {
             btnVolver.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         }
     }
 
+    // Recoge los datos de los campos de texto y los manda a la API.
     private void enviarIncidencia() {
         String titulo = etTitulo.getText().toString().trim();
         String desc = etDescripcion.getText().toString().trim();
 
+        // Validamos que el usuario haya escrito algo.
         if (titulo.isEmpty() || desc.isEmpty()) {
             Toast.makeText(getContext(), "Rellena todos los campos", Toast.LENGTH_SHORT).show();
             return;
@@ -77,6 +84,7 @@ public class IncidenciaFragment extends Fragment {
                 btnEnviar.setEnabled(true);
 
                 if (response.isSuccessful()) {
+                    // Si todo ha ido bien, avisamos y volvemos a la pantalla anterior.
                     Toast.makeText(getContext(), "✅ Incidencia enviada correctamente", Toast.LENGTH_LONG).show();
                     Navigation.findNavController(getView()).navigateUp();
                 } else {
@@ -90,7 +98,7 @@ public class IncidenciaFragment extends Fragment {
 
                 progressBar.setVisibility(View.GONE);
                 btnEnviar.setEnabled(true);
-                Toast.makeText(getContext(), "Fallo de conexión", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
             }
         });
     }

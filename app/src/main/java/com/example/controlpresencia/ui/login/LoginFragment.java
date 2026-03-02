@@ -20,6 +20,7 @@ import androidx.navigation.Navigation;
 import com.example.controlpresencia.R;
 import com.example.controlpresencia.data.local.SessionManager;
 
+// Esta es la pantalla de inicio de sesión.
 public class LoginFragment extends Fragment {
 
     private LoginViewModel viewModel;
@@ -31,7 +32,8 @@ public class LoginFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+                             Bundle saved) {
+        // Inflamos el diseño de la pantalla de login.
         return inflater.inflate(R.layout.fragment_login, container, false);
     }
 
@@ -39,6 +41,7 @@ public class LoginFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Si ya hay un token guardado, pasamos directamente a la pantalla principal sin pedir login.
         SessionManager sessionManager = new SessionManager(requireContext());
         if (sessionManager.getToken() != null) {
             NavController navController = Navigation.findNavController(view);
@@ -55,6 +58,7 @@ public class LoginFragment extends Fragment {
 
         viewModel = new ViewModelProvider(this).get(LoginViewModel.class);
 
+        // Al pulsar el botón de entrar.
         btnLogin.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
@@ -63,6 +67,7 @@ public class LoginFragment extends Fragment {
                 progressBar.setVisibility(View.VISIBLE);
                 btnLogin.setEnabled(false);
 
+                // Antes de loguearnos, pedimos el token de Firebase para que el servidor nos pueda mandar notificaciones.
                 com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken()
                         .addOnCompleteListener(task -> {
                             String fcmToken = null;
@@ -73,6 +78,7 @@ public class LoginFragment extends Fragment {
                                 android.util.Log.e("LOGIN_FCM", "Error al obtener token Firebase", task.getException());
                             }
 
+                            // Llamamos al ViewModel para que gestione el inicio de sesión.
                             viewModel.login(email, password, fcmToken);
                         });
             } else {
@@ -80,20 +86,24 @@ public class LoginFragment extends Fragment {
             }
         });
 
+        // Al pulsar en "Olvidé mi contraseña".
         tvForgotPassword.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(view);
             navController.navigate(R.id.action_loginFragment_to_forgotPasswordFragment);
         });
 
+        // Si el servidor devuelve un error de login.
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), message -> {
             Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
         });
 
+        // Mostramos o quitamos la barra de carga según el estado.
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
             btnLogin.setEnabled(!isLoading);
         });
 
+        // Si el login ha ido bien, guardamos la sesión y entramos.
         viewModel.getLoginResponse().observe(getViewLifecycleOwner(), response -> {
             if (response != null) {
                 SessionManager session = new SessionManager(requireContext());

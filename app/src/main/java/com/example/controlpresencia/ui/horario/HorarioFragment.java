@@ -28,6 +28,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Pantalla para que el trabajador vea su horario semanal asignado.
 public class HorarioFragment extends Fragment {
 
     private RecyclerView rvDiasHorario;
@@ -38,6 +39,7 @@ public class HorarioFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle saved) {
+        // Inflamos el diseño de la pantalla de horario.
         return inflater.inflate(R.layout.fragment_horario, container, false);
     }
 
@@ -52,18 +54,22 @@ public class HorarioFragment extends Fragment {
         tvTipoJornada = view.findViewById(R.id.tvTipoJornada);
         tvHorasSemanales = view.findViewById(R.id.tvHorasSemanales);
 
+        // Botón para volver atrás.
         MaterialButton btnVolver = view.findViewById(R.id.btnVolverHorario);
         if (btnVolver != null) {
             btnVolver.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         }
 
+        // Configuramos la lista verticalmente.
         rvDiasHorario.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new HorarioAdapter(new ArrayList<>());
         rvDiasHorario.setAdapter(adapter);
 
+        // Pedimos el horario al servidor.
         cargarHorarioDesdeAPI();
     }
 
+    // Llama a la API para obtener los días y horas de trabajo del usuario logueado.
     private void cargarHorarioDesdeAPI() {
         progressBarHorario.setVisibility(View.VISIBLE);
         String token = sessionManager.getToken();
@@ -77,18 +83,19 @@ public class HorarioFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     List<DiaHorario> dias = response.body();
 
-                    Log.d("MI_HORARIO", "Días recibidos desde Python: " + dias.size());
-
+                    // Si no tiene horario, avisamos y limpiamos los textos.
                     if (dias.isEmpty()) {
                         adapter.setDias(new ArrayList<>());
                         tvHorasSemanales.setText("--h");
                         tvTipoJornada.setText("Sin asignar");
-                        Toast.makeText(getContext(), "Aún no tienes un horario asignado por RRHH.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), "Aún no tienes un horario asignado.", Toast.LENGTH_LONG).show();
                         return;
                     }
 
+                    // Actualizamos la lista con los días recibidos.
                     adapter.setDias(dias);
 
+                    // Calculamos una estimación de horas semanales (suponiendo 8h por día no libre).
                     int horasTotales = 0;
                     for (DiaHorario dia : dias) {
                         if (!dia.isEsLibre()) {
@@ -100,7 +107,6 @@ public class HorarioFragment extends Fragment {
                     tvTipoJornada.setText(horasTotales >= 35 ? "Completa" : "Parcial");
 
                 } else {
-                    Log.e("MI_HORARIO", "Error HTTP: " + response.code());
                     Toast.makeText(getContext(), "Error al cargar el horario", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -109,8 +115,7 @@ public class HorarioFragment extends Fragment {
             public void onFailure(Call<List<DiaHorario>> call, Throwable t) {
                 if (getView() == null) return;
                 progressBarHorario.setVisibility(View.GONE);
-                Log.e("MI_HORARIO", "Fallo de conexión: " + t.getMessage());
-                Toast.makeText(getContext(), "Fallo de conexión", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
             }
         });
     }

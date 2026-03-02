@@ -16,6 +16,7 @@ import com.example.controlpresencia.R;
 import com.example.controlpresencia.data.local.SessionManager;
 import com.google.android.material.datepicker.MaterialDatePicker;
 
+// Pantalla donde el trabajador puede ver todos sus fichajes pasados.
 public class FichajesFragment extends Fragment {
 
     private FichajesViewModel viewModel;
@@ -24,6 +25,7 @@ public class FichajesFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle saved) {
+        // Ponemos el diseño de la pantalla de historial de fichajes.
         return inflater.inflate(R.layout.fragment_fichajes, container, false);
     }
 
@@ -34,6 +36,7 @@ public class FichajesFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
         viewModel = new ViewModelProvider(this).get(FichajesViewModel.class);
 
+        // Configuramos la lista de fichajes.
         RecyclerView rv = view.findViewById(R.id.rvFichajes);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new FichajesAdapter();
@@ -42,26 +45,32 @@ public class FichajesFragment extends Fragment {
         TextView tvTrabajado = view.findViewById(R.id.tvResumenTrabajado);
         TextView tvExtra = view.findViewById(R.id.tvResumenExtra);
 
+        // Cuando la lista de fichajes cambie en el ViewModel, actualizamos el adaptador.
         viewModel.getListaFichajes().observe(getViewLifecycleOwner(), lista -> {
             adapter.setDatos(lista);
         });
 
+        // Actualizamos los textos del resumen de horas (totales y extras).
         viewModel.getResumenTrabajado().observe(getViewLifecycleOwner(), tvTrabajado::setText);
         viewModel.getResumenExtra().observe(getViewLifecycleOwner(), tvExtra::setText);
 
+        // Botón para abrir el filtro por fechas.
         view.findViewById(R.id.btnFiltrar).setOnClickListener(v -> mostrarCalendario());
 
+        // Botón para volver a la pantalla anterior.
         View btnVolver = view.findViewById(R.id.btnVolverFichajes);
         if (btnVolver != null) {
             btnVolver.setOnClickListener(v -> androidx.navigation.Navigation.findNavController(v).navigateUp());
         }
 
+        // Cargamos el historial nada más entrar si tenemos el token.
         String token = sessionManager.getToken();
         if (token != null) {
             viewModel.cargarHistorial(token);
         }
     }
 
+    // Abre el selector de fechas de Google para filtrar el historial.
     private void mostrarCalendario() {
         MaterialDatePicker<Pair<Long, Long>> datePicker = MaterialDatePicker.Builder.dateRangePicker()
                 .setTitleText("Selecciona el periodo")
@@ -69,10 +78,12 @@ public class FichajesFragment extends Fragment {
                 .build();
 
         datePicker.addOnPositiveButtonClickListener(selection -> {
+            // Le pasamos al ViewModel el rango de fechas elegido.
             viewModel.filtrarPorRango(selection.first, selection.second);
         });
 
         datePicker.addOnNegativeButtonClickListener(v -> {
+            // Si cancela, volvemos a mostrar todo.
             viewModel.filtrarPorRango(null, null);
         });
 

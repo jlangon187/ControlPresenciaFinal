@@ -49,19 +49,35 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Fragment principal: muestra el panel del trabajador o el panel de admin/superadmin,
+// permite fichar (entrada por GPS, salida normal) y fichar con NFC.
+// También pinta un mapa con la ubicación/radio de la empresa.
 public class HomeFragment extends Fragment {
 
     // --- VARIABLES ---
+
+    // Estado global para alternar entre "modo trabajador" y "modo admin" en el panel
     private static boolean isModoAdminActivo = false;
+
     private HomeViewModel viewModel;
     private SessionManager sessionManager;
+
+    // UI
     private ProgressBar progressBar;
     private Button btnEntrada, btnSalida, btnReportarIncidencia;
     private MapView map;
+
+    // Datos del usuario logueado (perfil con empresa, etc.)
     private User usuarioActual;
+
+    // Cliente de ubicación (GPS)
     private FusedLocationProviderClient fusedLocationClient;
     private static final int REQUEST_LOCATION_PERMISSION = 100;
+
+    // NFC
     private android.nfc.NfcAdapter nfcAdapter;
+
+    // En superadmin: empresa sobre la que se está trabajando (se selecciona en un diálogo)
     private Empresa empresaSeleccionadaSuperadmin = null;
 
     // =========================================================================
@@ -70,6 +86,7 @@ public class HomeFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Configuración necesaria para OSMDroid (mapa) usando SharedPreferences
         Context ctx = requireContext().getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
         return inflater.inflate(R.layout.fragment_home, container, false);
@@ -79,6 +96,7 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Inicialización de helpers: sesión, ViewModel, GPS y NFC
         sessionManager = new SessionManager(requireContext());
         viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
@@ -92,12 +110,12 @@ public class HomeFragment extends Fragment {
         btnReportarIncidencia = view.findViewById(R.id.btnReportarIncidencia);
         map = view.findViewById(R.id.map);
 
-        // Configurar Mapa
+        // Configurar Mapa (OSMDroid)
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
         map.getController().setZoom(18.0);
 
-        // Saludo
+        // Saludo usando el nombre guardado en sesión
         TextView tvWelcome = view.findViewById(R.id.tvWelcome);
         String nombre = sessionManager.getNombre();
         if (nombre != null && !nombre.isEmpty()) {
@@ -105,17 +123,17 @@ public class HomeFragment extends Fragment {
             tvWelcome.setText("Hola, " + nombreSolo);
         }
 
-        // Fecha
+        // Fecha formateada en español para mostrar en el panel
         TextView tvAdminFechaLocal = view.findViewById(R.id.tvAdminFechaLocal);
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("EEEE, d 'de' MMMM", new java.util.Locale("es", "ES"));
         String fechaBonita = sdf.format(new java.util.Date());
         fechaBonita = fechaBonita.substring(0, 1).toUpperCase() + fechaBonita.substring(1);
         tvAdminFechaLocal.setText(fechaBonita);
 
-        // Configurar Botones
+        // Listeners de botones de navegación y acciones
         configurarBotones(view, btnHistorial);
 
-        // Configurar Vista de Roles (Admin vs Trabajador)
+        // Monta la UI dependiendo del rol (trabajador / admin / superadmin)
         configurarPanelRoles(view);
 
         // Pedir permiso de notificaciones para Android 13+
@@ -125,7 +143,7 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        // Observadores del ViewModel
+        // Observa mensajes y estado de carga para bloquear botones y mostrar loader
         viewModel.getStatusMessage().observe(getViewLifecycleOwner(), mensaje -> Toast.makeText(getContext(), mensaje, Toast.LENGTH_LONG).show());
 
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), isLoading -> {
@@ -134,6 +152,7 @@ public class HomeFragment extends Fragment {
             btnSalida.setEnabled(!isLoading);
         });
 
+        // Llama a la API para cargar el perfil (y con ello empresa/ubicación)
         cargarPerfilEmpresa();
     }
 
@@ -141,6 +160,8 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        // Activa el lector NFC mientras el fragment está en primer plano
         if (nfcAdapter != null) {
             android.os.Bundle options = new android.os.Bundle();
             options.putInt(android.nfc.NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250);
@@ -153,6 +174,7 @@ public class HomeFragment extends Fragment {
                     options);
         }
 
+        // Si la Activity ha recibido un intent NFC, lo procesa para fichar con el UID
         android.content.Intent intent = requireActivity().getIntent();
         if (intent != null && intent.getAction() != null) {
             String action = intent.getAction();
@@ -168,6 +190,7 @@ public class HomeFragment extends Fragment {
                     Toast.makeText(getContext(), "Fichando...", Toast.LENGTH_SHORT).show();
                     procesarFichajeNFC(nfcUid);
 
+                    // Se limpia la acción para no re-procesar el mismo intent al volver a entrar
                     intent.setAction(android.content.Intent.ACTION_MAIN);
                 }
             }
@@ -178,6 +201,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+        // Desactiva el lector NFC para ahorrar recursos y evitar lecturas fuera de contexto
         if (nfcAdapter != null) {
             nfcAdapter.disableReaderMode(requireActivity());
         }
@@ -192,7 +216,7 @@ public class HomeFragment extends Fragment {
         btnHistorial.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_fichajesFragment));
         btnReportarIncidencia.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_incidenciaFragment));
 
-        // Botón Fichar Entrada (Mantiene el requisito de GPS)
+        // Botón Fichar Entrada: exige GPS y envía lat/long al ViewModel
         btnEntrada.setOnClickListener(v -> {
             if (checkPermission()) {
                 obtenerUbicacionYFichar();
@@ -201,7 +225,7 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // Botón Fichar Salida
+        // Botón Fichar Salida: solo envía el token al ViewModel
         btnSalida.setOnClickListener(v -> {
             String token = sessionManager.getToken();
             if (token != null) {
@@ -214,7 +238,7 @@ public class HomeFragment extends Fragment {
         // Botón Ver Horario
         view.findViewById(R.id.btnVerHorario).setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_horarioFragment));
 
-        // Botón Cerrar Sesión con confirmación
+        // Botón Cerrar Sesión con confirmación (borra sesión y vuelve al login)
         view.findViewById(R.id.btnLogout).setOnClickListener(v -> {
             new android.app.AlertDialog.Builder(requireContext())
                     .setTitle("Cerrar Sesión")
@@ -231,6 +255,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void configurarPanelRoles(View view) {
+        // Elementos comunes del panel
         TextView tvStatus = view.findViewById(R.id.tvStatus);
         MaterialButton btnAdminSwitch = view.findViewById(R.id.btnAdminPanel);
         View cardAdminDashboard = view.findViewById(R.id.cardAdminDashboard);
@@ -241,7 +266,10 @@ public class HomeFragment extends Fragment {
 
         androidx.constraintlayout.widget.Group groupTrabajador = view.findViewById(R.id.groupTrabajador);
 
+        // Si el usuario es admin, se muestran opciones de administración
         if (sessionManager.isAdmin()) {
+
+            // Superadmin: trabaja "a nivel global" eligiendo empresa
             if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
                 // ==========================================
                 // MODO SUPERADMINISTRADOR (Dinámico)
@@ -254,8 +282,10 @@ public class HomeFragment extends Fragment {
                 btnAdminSwitch.setText("SELECCIONAR EMPRESA");
                 btnAdminSwitch.setBackgroundColor(Color.parseColor("#10B981")); // Color Verde
 
+                // Abre un diálogo para elegir empresa y cargar acciones con ese id
                 btnAdminSwitch.setOnClickListener(v -> mostrarDialogoSeleccionEmpresaGlobal(view));
 
+                // Pinta el dashboard en función de si ya hay empresa seleccionada o no
                 actualizarUiSuperadmin(view);
 
             } else {
@@ -264,6 +294,7 @@ public class HomeFragment extends Fragment {
                 // ==========================================
                 btnAdminSwitch.setVisibility(View.VISIBLE);
 
+                // Acciones del admin (empleados, incidencias y configuración mapa)
                 btnAdminAccion1.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_adminEmpleadosFragment));
                 btnAdminAccion2.setOnClickListener(v -> {
                     if (usuarioActual != null && usuarioActual.getEmpresa() != null) {
@@ -274,6 +305,7 @@ public class HomeFragment extends Fragment {
                 });
                 btnAdminAccion3.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_configMapaFragment));
 
+                // Si está activo el modo admin, cambia UI a dashboard
                 if (isModoAdminActivo) {
                     btnAdminSwitch.setText("MODO TRABAJADOR");
                     btnAdminSwitch.setBackgroundColor(Color.parseColor("#3B82F6"));
@@ -281,16 +313,20 @@ public class HomeFragment extends Fragment {
                     groupTrabajador.setVisibility(View.GONE);
                     cardAdminDashboard.setVisibility(View.VISIBLE);
 
+                    // Trae estadísticas (activos/ausencias)
                     cargarEstadisticasAdmin(view);
 
+                    // Título con nombre de la empresa del usuario
                     String nombreEmpresa = (usuarioActual != null && usuarioActual.getEmpresa() != null)
                             ? usuarioActual.getEmpresa().getNombre().toUpperCase() : "EMPRESA";
                     tvAdminDashboardTitle.setText("Empresa:\n" + nombreEmpresa);
 
+                    // Textos de botones del panel admin
                     btnAdminAccion1.setText("GESTIONAR MIS EMPLEADOS");
                     btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
                     btnAdminAccion3.setText("CONFIGURAR UBICACIÓN"); // NUEVO
                 } else {
+                    // Modo trabajador
                     btnAdminSwitch.setText("MODO ADMIN");
                     btnAdminSwitch.setBackgroundColor(Color.parseColor("#EA580C"));
                     tvStatus.setText("Panel del Trabajador");
@@ -298,6 +334,7 @@ public class HomeFragment extends Fragment {
                     cardAdminDashboard.setVisibility(View.GONE);
                 }
 
+                // Botón que alterna entre modo trabajador y modo admin
                 btnAdminSwitch.setOnClickListener(v -> {
                     isModoAdminActivo = !isModoAdminActivo;
 
@@ -327,6 +364,7 @@ public class HomeFragment extends Fragment {
                 });
             }
         } else {
+            // Usuario normal: solo panel trabajador
             cardAdminDashboard.setVisibility(View.GONE);
             groupTrabajador.setVisibility(View.VISIBLE);
             btnAdminSwitch.setVisibility(View.GONE);
@@ -335,6 +373,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void logout() {
+        // Borra preferencias de sesión y navega al login limpiando backstack
         sessionManager.clearSession();
         View view = getView();
         if (view != null) {
@@ -350,6 +389,7 @@ public class HomeFragment extends Fragment {
     // =========================================================================
 
     private void actualizarMapa() {
+        // Pinta empresa + radio y, si hay permiso, la posición del usuario
         if (map == null || usuarioActual == null || usuarioActual.getEmpresa() == null) return;
 
         Empresa empresa = usuarioActual.getEmpresa();
@@ -359,12 +399,14 @@ public class HomeFragment extends Fragment {
 
             map.getController().setCenter(puntoEmpresa);
 
+            // Marcador en la ubicación de la empresa
             Marker markerEmpresa = new Marker(map);
             markerEmpresa.setPosition(puntoEmpresa);
             markerEmpresa.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
             markerEmpresa.setTitle(empresa.getNombre());
             map.getOverlays().add(markerEmpresa);
 
+            // Círculo de radio permitido para fichar
             Polygon circulo = new Polygon();
             List<GeoPoint> puntosCirculo = Polygon.pointsAsCircle(puntoEmpresa, radioMetros);
             circulo.setPoints(puntosCirculo);
@@ -373,6 +415,7 @@ public class HomeFragment extends Fragment {
             circulo.setStrokeWidth(2.0f);
             map.getOverlays().add(circulo);
 
+            // Overlay de "mi ubicación" si hay permisos de GPS
             if (checkPermission()) {
                 MyLocationNewOverlay myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(requireContext()), map);
                 myLocationOverlay.enableMyLocation();
@@ -384,10 +427,12 @@ public class HomeFragment extends Fragment {
     }
 
     private boolean checkPermission() {
+        // Comprueba permiso de ubicación precisa
         return ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void pedirPermisoGPS() {
+        // Pide permiso de GPS al usuario
         requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
     }
 
@@ -396,7 +441,7 @@ public class HomeFragment extends Fragment {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Al dar permiso, registramos la Entrada
+                // Si da permiso, se intenta fichar entrada y se actualiza el mapa
                 obtenerUbicacionYFichar();
                 actualizarMapa();
             }
@@ -405,6 +450,7 @@ public class HomeFragment extends Fragment {
 
     @SuppressLint("MissingPermission")
     private void obtenerUbicacionYFichar() {
+        // Obtiene la última ubicación conocida y manda la entrada con lat/long
         progressBar.setVisibility(View.VISIBLE);
         fusedLocationClient.getLastLocation().addOnSuccessListener(requireActivity(), location -> {
             progressBar.setVisibility(View.GONE);
@@ -424,12 +470,14 @@ public class HomeFragment extends Fragment {
     // =========================================================================
 
     private void cargarPerfilEmpresa() {
+        // Llama a la API para obtener el perfil del usuario (incluye su empresa)
         String token = sessionManager.getToken();
         RetrofitClient.getInstance().getMyApi().getPerfil(token).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     usuarioActual = response.body();
+                    // Con la empresa cargada, se puede pintar el mapa con ubicación/radio
                     actualizarMapa();
                 }
             }
@@ -438,17 +486,20 @@ public class HomeFragment extends Fragment {
         });
     }
 
+    // Callback de lectura NFC (modo reader)
     private final android.nfc.NfcAdapter.ReaderCallback nfcCallback = tag -> {
         byte[] id = tag.getId();
         String nfcUid = bytesToHex(id);
 
         requireActivity().runOnUiThread(() -> {
             Toast.makeText(getContext(), "¡Tarjeta NFC detectada! UID: " + nfcUid, Toast.LENGTH_SHORT).show();
+            // Envía el UID al backend para registrar fichaje por NFC
             procesarFichajeNFC(nfcUid);
         });
     };
 
     private String bytesToHex(byte[] bytes) {
+        // Convierte el UID en bytes a string hexadecimal (formato típico para NFC)
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
             sb.append(String.format("%02X", b));
@@ -457,6 +508,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void procesarFichajeNFC(String uidTarjeta) {
+        // Envía al backend el UID de la tarjeta NFC para registrar el fichaje
         String token = sessionManager.getToken();
         if (token == null) return;
 
@@ -468,8 +520,10 @@ public class HomeFragment extends Fragment {
             public void onResponse(Call<com.example.controlpresencia.data.model.FichajeResponse> call, Response<com.example.controlpresencia.data.model.FichajeResponse> response) {
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
+                    // Mensaje OK devuelto por el backend
                     Toast.makeText(getContext(), "✅ " + response.body().getMessage(), Toast.LENGTH_LONG).show();
                 } else {
+                    // Intenta leer el mensaje de error desde el body (JSON) si existe
                     try {
                         if (response.errorBody() != null) {
                             String errorStr = response.errorBody().string();
@@ -486,6 +540,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onFailure(Call<com.example.controlpresencia.data.model.FichajeResponse> call, Throwable t) {
+                // Error de red / servidor no accesible
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(getContext(), "⚠️ Error de conexión", Toast.LENGTH_SHORT).show();
             }
@@ -493,6 +548,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void actualizarUiSuperadmin(View view) {
+        // Ajusta el dashboard del superadmin en función de si ya hay empresa seleccionada
         TextView tvAdminDashboardTitle = view.findViewById(R.id.tvAdminDashboardTitle);
         MaterialButton btnAdminAccion1 = view.findViewById(R.id.btnAdminAccion1);
         MaterialButton btnAdminAccion2 = view.findViewById(R.id.btnAdminAccion2);
@@ -502,7 +558,7 @@ public class HomeFragment extends Fragment {
         btnAdminAccion2.setText("INCIDENCIAS DE MI EMPRESA");
         btnAdminAccion3.setText("CONFIGURAR UBICACIÓN");
 
-
+        // Si no hay empresa elegida, las acciones no hacen nada y se avisa
         if (empresaSeleccionadaSuperadmin == null) {
             tvAdminDashboardTitle.setText("Centro Global\n(Selecciona empresa arriba)");
             tvAdminDashboardTitle.setTextSize(16f); // Más pequeño para que quepa
@@ -515,6 +571,7 @@ public class HomeFragment extends Fragment {
             btnAdminAccion3.setOnClickListener(alertaSeleccion);
 
         } else {
+            // Con empresa seleccionada, se navega pasando empresa_id en Bundle
             tvAdminDashboardTitle.setText("Empresa:\n" + empresaSeleccionadaSuperadmin.getNombre().toUpperCase());
             tvAdminDashboardTitle.setTextSize(18f);
 
@@ -536,11 +593,13 @@ public class HomeFragment extends Fragment {
                 Navigation.findNavController(v).navigate(R.id.action_homeFragment_to_configMapaFragment, bundle);
             });
 
+            // Carga estadísticas para la empresa seleccionada
             cargarEstadisticasAdmin(view);
         }
     }
 
     private void mostrarDialogoSeleccionEmpresaGlobal(View mainView) {
+        // Para superadmin: trae lista de empresas y deja elegir una
         progressBar.setVisibility(View.VISIBLE);
         String token = sessionManager.getToken();
 
@@ -556,8 +615,8 @@ public class HomeFragment extends Fragment {
                     new AlertDialog.Builder(requireContext())
                             .setTitle("Trabajar con la empresa:")
                             .setItems(nombres, (dialog, which) -> {
+                                // Guarda la empresa elegida y refresca el dashboard
                                 empresaSeleccionadaSuperadmin = lista.get(which);
-
                                 actualizarUiSuperadmin(mainView);
                             }).show();
                 } else {
@@ -574,12 +633,15 @@ public class HomeFragment extends Fragment {
     }
 
     private void cargarEstadisticasAdmin(View view) {
+        // Carga estadísticas del panel admin: activos y ausencias
         TextView tvStatActivos = view.findViewById(R.id.tvAdminStatActivos);
         TextView tvStatAusencias = view.findViewById(R.id.tvAdminStatAusencias);
 
         String token = sessionManager.getToken();
         if (token == null) return;
 
+        // Si es superadmin, se envía empresa_id (según selección).
+        // Si es admin normal, se envía null y el backend entiende la empresa del usuario.
         Integer empresaIdAEnviar = null;
         if (sessionManager.getRol().equalsIgnoreCase("Superadministrador")) {
             if (empresaSeleccionadaSuperadmin == null) {
@@ -606,6 +668,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onFailure(Call<AdminStatsResponse> call, Throwable t) {
+                // Si falla la red, se marca con X para indicar que no se pudo cargar
                 if (getView() != null) {
                     tvStatActivos.setText("X");
                     tvStatAusencias.setText("X");

@@ -18,6 +18,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Pantalla para pedir que te manden un correo para cambiar la contraseña si se te ha olvidado.
 public class ForgotPasswordFragment extends Fragment {
 
     private EditText etEmail;
@@ -25,6 +26,7 @@ public class ForgotPasswordFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle saved) {
+        // Inflamos el diseño de "Olvidé mi contraseña".
         return inflater.inflate(R.layout.fragment_forgot_password, container, false);
     }
 
@@ -36,17 +38,22 @@ public class ForgotPasswordFragment extends Fragment {
         btnEnviar = view.findViewById(R.id.btnEnviarReset);
         Button btnVolver = view.findViewById(R.id.btnVolverLogin);
 
+        // Al pulsar enviar, se manda el correo al servidor.
         btnEnviar.setOnClickListener(v -> enviarSolicitud());
+        // Botón para volver al login sin hacer nada.
         btnVolver.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
     }
 
+    // Llama a la API para solicitar el cambio de contraseña.
     private void enviarSolicitud() {
         String email = etEmail.getText().toString().trim();
+        // Comprobamos que el usuario haya puesto un email.
         if (email.isEmpty()) {
             Toast.makeText(getContext(), "Escribe tu email", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Desactivamos el botón mientras se envía para que no le den dos veces.
         btnEnviar.setEnabled(false);
         btnEnviar.setText("Enviando...");
 
@@ -55,12 +62,14 @@ public class ForgotPasswordFragment extends Fragment {
         RetrofitClient.getInstance().getMyApi().solicitarResetPassword(request).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
+                // Reactivamos el botón pase lo que pase.
                 btnEnviar.setEnabled(true);
                 btnEnviar.setText("ENVIAR CORREO");
 
                 if (response.isSuccessful()) {
+                    // Si el servidor acepta la petición, avisamos al usuario y volvemos atrás.
                     Toast.makeText(getContext(), "✅ Revisa tu correo", Toast.LENGTH_LONG).show();
-                    Navigation.findNavController(getView()).navigateUp(); // Volver al login
+                    Navigation.findNavController(getView()).navigateUp(); 
                 } else {
                     Toast.makeText(getContext(), "Error al solicitar: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
@@ -70,7 +79,7 @@ public class ForgotPasswordFragment extends Fragment {
             public void onFailure(Call<Void> call, Throwable t) {
                 btnEnviar.setEnabled(true);
                 btnEnviar.setText("ENVIAR CORREO");
-                Toast.makeText(getContext(), "Fallo de conexión", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
             }
         });
     }
